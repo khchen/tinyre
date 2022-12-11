@@ -1,8 +1,12 @@
 /*
-modify by khchen
-# add meta characters: \n \r \t \b \v \f \s \S \d \D \w \W \xHH.
-# add case insensitive mode.
-# deal with 0 and large number in {n,m}
+Copyright (c) 2022 Kai-Hung Chen, Ward. All rights reserved.
+
+Modifications:
+  * Add meta characters: \n \r \t \b \v \f \s \S \d \D \w \W
+                         \xHH \uHHHH \UHHHHHHHH.
+  * Add case insensitive mode and binary mode.
+  * Deal with 0 and large number in {n,m}.
+  * Add wrap codes to compile and run the regex.
 */
 
 /*
@@ -18,7 +22,7 @@ Use of this source code is governed by a BSD-style
 
 unsigned char utf8_length[256] = {
   /*  0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F */
-  /* 0 */ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+  /* 0 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
   /* 1 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
   /* 2 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
   /* 3 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -36,21 +40,27 @@ unsigned char utf8_length[256] = {
   /* F */ 4, 4, 4, 4, 4, 4, 4, 4, 1, 1, 1, 1, 1, 1, 1, 1
 };
 
-/* return the length of a utf-8 character */
-#define uc_len(dst, s) dst = utf8_length[(unsigned char)s[0]];
-/* the unicode codepoint of the given utf-8 character */
-#define uc_code(dst, s) \
-dst = (unsigned char)s[0]; \
-if (dst < 192){} \
-else if (dst < 224) \
-  dst = ((dst & 0x1f) << 6) | (s[1] & 0x3f); \
-else if (dst < 240) \
-  dst = ((dst & 0x0f) << 12) | ((s[1] & 0x3f) << 6) | (s[2] & 0x3f); \
-else if (dst < 248) \
-  dst = ((dst & 0x07) << 18) | ((s[1] & 0x3f) << 12) | \
-    ((s[2] & 0x3f) << 6) | (s[3] & 0x3f); \
-else \
-  dst = 0; \
+static int uc_len(const char * s, int utf8) {
+  /* return the length of a utf-8 character */
+  if (utf8) {
+    return utf8_length[(unsigned char)s[0]];
+  } else {
+    return 1;
+  }
+}
+
+static int uc_code(const char * s, int utf8) {
+  /* the unicode codepoint of the given utf-8 character */
+  int dst = (unsigned char)s[0];
+  if (utf8) {
+    if (dst < 192) {}
+    else if (dst < 224) dst = ((dst & 0x1f) << 6) | (s[1] & 0x3f);
+    else if (dst < 240) dst = ((dst & 0x0f) << 12) | ((s[1] & 0x3f) << 6) | (s[2] & 0x3f);
+    else if (dst < 248) dst = ((dst & 0x07) << 18) | ((s[1] & 0x3f) << 12) | ((s[2] & 0x3f) << 6) | (s[3] & 0x3f);
+    else dst = 0;
+  }
+  return dst;
+}
 
 static int isword(const char *s)
 {
@@ -148,12 +158,17 @@ static int _toi(int x) {
   return isdigit(x) ? x - '0' : x - 'a' + 10;
 }
 
-static int _asc(const char *re) {
-  if (!isxdigit(re[1]) || !isxdigit(re[2])) return -1;
-  return _toi(tolower(re[1])) << 4 | _toi(tolower(re[2]));
+static int _code(const char *re, int n) {
+  int i, result = 0;
+  for (i = 1; i <= n; i++) {
+    if (!isxdigit(re[i])) return -1;
+    result <<= 4;
+    result |= _toi(tolower(re[i]));
+  }
+  return result;
 }
 
-static int _compilecode(const char *re_loc, rcode *prog, int sizecode)
+static int _compilecode(const char *re_loc, rcode *prog, int sizecode, int utf8)
 {
   const char *re = re_loc;
   int *code = sizecode ? NULL : prog->insts;
@@ -186,21 +201,37 @@ static int _compilecode(const char *re_loc, rcode *prog, int sizecode)
         term = PC;
         EMIT(PC++, CHAR);
         switch (*re) {
-          case 'n': EMIT(PC++, '\n');
-          case 'r': EMIT(PC++, '\r');
-          case 't': EMIT(PC++, '\t');
-          case 'b': EMIT(PC++, '\b');
-          case 'f': EMIT(PC++, '\f');
-          case 'v': EMIT(PC++, '\v');
+          case 'n': EMIT(PC++, '\n'); break;
+          case 'r': EMIT(PC++, '\r'); break;
+          case 't': EMIT(PC++, '\t'); break;
+          case 'b': EMIT(PC++, '\b'); break;
+          case 'f': EMIT(PC++, '\f'); break;
+          case 'v': EMIT(PC++, '\v'); break;
         }
         break;
       case 'x':
         term = PC;
-        int ch = _asc(re);
+        int ch = _code(re, 2);
         if (ch < 0) return -1;
         re += 2;
         EMIT(PC++, CHAR);
         EMIT(PC++, ch);
+        break;
+      case 'u':
+        term = PC;
+        int ch4 = _code(re, 4);
+        if (ch4 < 0) return -1;
+        re += 4;
+        EMIT(PC++, CHAR);
+        EMIT(PC++, ch4);
+        break;
+      case 'U':
+        term = PC;
+        int ch8 = _code(re, 8);
+        if (ch8 < 0) return -1;
+        re += 8;
+        EMIT(PC++, CHAR);
+        EMIT(PC++, ch8);
         break;
       default: goto _default;
       }
@@ -209,7 +240,7 @@ static int _compilecode(const char *re_loc, rcode *prog, int sizecode)
     _default:
       term = PC;
       EMIT(PC++, CHAR);
-      uc_code(c, re) EMIT(PC++, c);
+      c = uc_code(re, utf8); EMIT(PC++, c);
       break;
     case '.':
       term = PC;
@@ -239,21 +270,34 @@ static int _compilecode(const char *re_loc, rcode *prog, int sizecode)
           case 'f': EMIT(PC++, '\f'); EMIT(PC++, '\f'); re++; continue;
           case 'v': EMIT(PC++, '\v'); EMIT(PC++, '\v'); re++; continue;
           case 'x': {
-              int ch = _asc(re);
+              int ch = _code(re, 2);
               if (ch < 0) return -1;
               EMIT(PC++, ch); EMIT(PC++, ch);
               re += 3;
               continue;
             }
+          case 'u': {
+              int ch4 = _code(re, 4);
+              if (ch4 < 0) return -1;
+              EMIT(PC++, ch4); EMIT(PC++, ch4);
+              re += 5;
+              continue;
+            }
+          case 'U': {
+              int ch8 = _code(re, 8);
+              if (ch8 < 0) return -1;
+              EMIT(PC++, ch8); EMIT(PC++, ch8);
+              re += 9;
+              continue;
+            }
           }
         }
         if (!*re) return -1;
-        uc_code(c, re) EMIT(PC++, c);
-        uc_len(c, re)
+        c = uc_code(re, utf8); EMIT(PC++, c); c = uc_len(re, utf8);
         if (re[c] == '-' && re[c+1] != ']')
           re += c+1;
-        uc_code(c, re) EMIT(PC++, c);
-        uc_len(c, re) re += c;
+        c = uc_code(re, utf8); EMIT(PC++, c); c = uc_len(re, utf8);
+        re += c;
       }
       EMIT(term + 2, cnt);
       break;
@@ -403,7 +447,7 @@ static int _compilecode(const char *re_loc, rcode *prog, int sizecode)
       term = PC;
       break;
     }
-    uc_len(c, re) re += c;
+    c = uc_len(re, utf8); re += c;
   }
   if (code && alt_label) {
     EMIT(alt_label, REL(alt_label, PC) + 1);
@@ -415,19 +459,19 @@ static int _compilecode(const char *re_loc, rcode *prog, int sizecode)
   return capc ? -1 : 0;
 }
 
-int re_sizecode(const char *re, int *nsub)
+int re_sizecode(const char *re, int *nsub, int utf8)
 {
   rcode dummyprog;
   dummyprog.unilen = 3;
   dummyprog.sub = 0;
 
-  int res = _compilecode(re, &dummyprog, 1);
+  int res = _compilecode(re, &dummyprog, 1, utf8);
   if (res < 0) return res;
   *nsub = dummyprog.sub;
   return dummyprog.unilen;
 }
 
-int re_comp(rcode *prog, const char *re, int nsubs)
+int re_comp(rcode *prog, const char *re, int nsubs, int utf8)
 {
   prog->len = 0;
   prog->unilen = 0;
@@ -435,7 +479,7 @@ int re_comp(rcode *prog, const char *re, int nsubs)
   prog->presub = nsubs;
   prog->splits = 0;
 
-  int res = _compilecode(re, prog, 0);
+  int res = _compilecode(re, prog, 0, utf8);
   if (res < 0) return res;
   int icnt = 0, scnt = SPLIT;
   for (int i = 0; i < prog->unilen; i++)
@@ -578,7 +622,7 @@ if (spc > JMP) { \
     deccheck(nn) \
   npc++; goto rec##nn; \
 } else if (spc == EOL) { \
-  if (*_sp) \
+  if (!last) \
     deccheck(nn) \
   npc++; goto rec##nn; \
 } else if (spc == JMP) { \
@@ -601,12 +645,13 @@ clistidx = nlistidx; \
 
 #define deccont() { decref(nsub) continue; }
 
-int re_pikevm(rcode *prog, const char *s, int len, const char **subp, int nsubp, int insensitive)
+int re_pikevm(rcode *prog, const char *s, int len, const char **subp, int nsubp, int insensitive, int utf8)
 {
   int rsubsize = prog->presub, suboff = 0;
   int spc, i, j, c, *npc, osubp = nsubp * sizeof(char*);
   int si = 0, clistidx = 0, nlistidx, mcont = MATCH;
   const char *sp = s, *_sp = s;
+  int last = 0;
   int *insts = prog->insts;
   int *pcs[prog->splits];
   rsub *subs[prog->splits];
@@ -615,12 +660,18 @@ int re_pikevm(rcode *prog, const char *s, int len, const char **subp, int nsubp,
   rthread _clist[prog->len], _nlist[prog->len];
   rthread *clist = _clist, *nlist = _nlist, *tmp;
   char nsubs[prog->sub];
+  if (len == 0) last = 1;
   goto jmp_start;
   for (;; sp = _sp) {
-    if (sp >= s + len) i = 0;
-    else uc_len(i, sp)
-    uc_code(c, sp)
+    if (last) {
+      i = 0;
+      c = 0;
+    } else {
+      i = uc_len(sp, utf8);
+      c = uc_code(sp, utf8);
+    }
     _sp = sp+i;
+    if (_sp >= s + len) last = 1;
     nlistidx = 0; sparsesz = 0;
     for (i = 0; i < clistidx; i++) {
       npc = clist[i].pc;
@@ -679,11 +730,13 @@ struct RE {
   int count;
   int sub_els;
   int insensitive;
+  int utf8;
+  int size;
 };
 
-RE* re_compile(const char *pattern, int insensitive) {
+RE* re_compile(const char *pattern, int insensitive, int utf8) {
   int sub_els;
-  int sz = re_sizecode(pattern, &sub_els) * sizeof(int);
+  int sz = re_sizecode(pattern, &sub_els, utf8) * sizeof(int);
   if (sz < 0) return NULL;
   int count = (sub_els + 1) * 2;
   int captures_size = count * sizeof(char*);
@@ -697,12 +750,26 @@ RE* re_compile(const char *pattern, int insensitive) {
   re->buffer = (char*) re + sizeof(RE) + captures_size;
   re->count = count;
   re->insensitive = insensitive;
+  re->utf8 = utf8;
+  re->size = sizeof(RE) + captures_size + buffer_size;
 
-  if (re_comp((rcode *)re->buffer, pattern, sub_els)) {
+  if (re_comp((rcode *)re->buffer, pattern, sub_els, utf8)) {
     free(re);
     return NULL;
   }
   return re;
+}
+
+RE* re_dup(RE* re) {
+  if (!re || re->size == 0) return NULL;
+  RE* newre = malloc(re->size);
+  memcpy(newre, re, re->size);
+  return newre;
+}
+
+void re_flags(RE* re, int* insensitive, int* utf8) {
+  *insensitive = re->insensitive;
+  *utf8 = re->utf8;
 }
 
 int re_max_matches(RE* re) {
@@ -717,7 +784,7 @@ const char** re_match(RE* re, const char* string, int len) {
   if (re == NULL) return NULL;
 
   memset(re->captures, 0, re->count * sizeof(char*));
-  int sz = re_pikevm((rcode *)re->buffer, string, len, re->captures, re->count, re->insensitive);
+  int sz = re_pikevm((rcode *)re->buffer, string, len, re->captures, re->count, re->insensitive, re->utf8);
 
   if (!sz) return NULL;
   return re->captures;
