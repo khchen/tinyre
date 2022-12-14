@@ -291,7 +291,7 @@ window.addEventListener('DOMContentLoaded', main);
   <div class="nine columns" id="content">
   <div id="tocRoot"></div>
   
-  <p class="module-desc"><p>TinyRE is a Nim wrap for a tiny regex engine based on Rob Pike's VM implementation. Compare to other small regex engine, this engine supports unicode and most of common regex syntax, in less than 10K binary size (loc &lt; 1K), and guarantees that input regex will scale O(n) with the size of the string.</p>
+  <p class="module-desc"><p>TinyRE is a Nim wrap for a tiny regex engine based on Rob Pike's VM implementation. Compare to other small regex engine, this engine supports unicode and most of common regex syntax, in less than 10K binary size (LOC &lt; 1K), and guarantees that input regex will scale O(n) with the size of the string.</p>
 <p><strong>NOTICE: This implementation always return entire pattern as first capture. This is different from std/re.</strong></p>
 
 <h1><a class="toc-backref" id="syntax" href="#syntax">Syntax</a></h1><pre class="listing"><span class="Operator">^</span>          <span class="Identifier">Match</span> <span class="Identifier">beginning</span> <span class="Keyword">of</span> <span class="Identifier">a</span> <span class="Identifier">buffer</span>
@@ -563,8 +563,8 @@ Constructor of regular expressions with reUtf8 and reGlobal flags.
 </dd>
 </div>
 <div id="split,string,Re,int">
-<dt><pre><span class="Keyword">proc</span> <a href="#split%2Cstring%2CRe%2Cint"><span class="Identifier">split</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">;</span> <span class="Identifier">pattern</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a><span class="Other">;</span> <span class="Identifier">maxsplit</span> <span class="Other">=</span> <span class="DecNumber">-1</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">string</span><span class="Other">]</span> {.<span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span>
-    <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
+<dt><pre><span class="Keyword">proc</span> <a href="#split%2Cstring%2CRe%2Cint"><span class="Identifier">split</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">;</span> <span class="Identifier">pattern</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a><span class="Other">;</span> <span class="Identifier">maxsplit</span> <span class="Other">=</span> <span class="DecNumber">-1</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">string</span><span class="Other">]</span> {.
+    <span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
 <dd>
 
 Splits the string <tt class="docutils literal"><span class="pre"><span class="Identifier">s</span></span></tt> into a seq of substrings.

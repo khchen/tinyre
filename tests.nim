@@ -661,8 +661,8 @@ suite "Test Suite for TinyRE":
       not contains("我", re"\u6211")
       contains("弢", re"\xF0\xAF\xA2\x94")
       contains("弢", reU"\U0002F894")
-      not contains("弢", reU"\xE6\x88\x91")
-      not contains("弢", re"\u6211")
+      not contains("弢", reU"\xF0\xAF\xA2\x94")
+      not contains("弢", re"\U0002F894")
 
   test "Test split()":
     check:
@@ -686,14 +686,20 @@ suite "Test Suite for TinyRE":
       split("foo", re"foo") == @["", ""]
       split("", re"foo") == @[""]
       split("bar", re"foo") == @["bar"]
+      split("abcd", re"", 2) == @["a", "b", "cd"]
+      split("中文測試", reU"", 2) == @["中", "文", "測試"]
+      split("中文", re"") == @["\xE4", "\xB8", "\xAD", "\xE6", "\x96", "\x87"]
+      split("中文", reU"") == @["中", "文"]
 
   test "Test startsWith()":
     check:
       startsWith("abc", re"ab")
       startsWith("abc", re"bc") == false
       startsWith("弢ⒶΪ", reU"弢Ⓐ")
-      startsWith("弢", reU("\xF0\xAF\xA2\x94"))
-      startsWith("弢", reU("\xF0\xAF\xA2")) == false
+      startsWith("弢", re"\U0002F894") == false
+      startsWith("弢", re"\xF0\xAF\xA2")
+      startsWith("弢", reU"\U0002F894")
+      startsWith("弢", reU"\xF0\xAF\xA2") == false
       startsWith("abc", re"\w")
       startsWith("abc", re"\d") == false
       startsWith("abc", re"(a|b)")
@@ -706,8 +712,10 @@ suite "Test Suite for TinyRE":
       endsWith("abc", re"bc")
       endsWith("abc", re"ab") == false
       endsWith("弢ⒶΪ", reU"ⒶΪ")
-      endsWith("弢", reU("\xF0\xAF\xA2\x94"))
-      endsWith("弢", reU("\xAF\xA2\x94")) == false
+      endsWith("弢", re"\U0002F894") == false
+      endsWith("弢", re"\xAF\xA2\x94")
+      endsWith("弢", reU"\U0002F894")
+      endsWith("弢", reU"\xF0\xAF\xA2") == false
       endsWith("abc", re"(b|c)")
       endsWith("ab", re"(b|c)")
       endsWith("a", re"(b|c)") == false

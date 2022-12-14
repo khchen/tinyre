@@ -9,7 +9,7 @@
   TinyRE is a Nim wrap for a tiny regex engine based on Rob Pike's VM
   implementation. Compare to other small regex engine, this engine
   supports unicode and most of common regex syntax, in less than 10K
-  binary size (loc < 1K), and guarantees that input regex will scale O(n)
+  binary size (LOC < 1K), and guarantees that input regex will scale O(n)
   with the size of the string.
 
   **NOTICE: This implementation always return entire pattern as first
@@ -172,16 +172,16 @@ proc reIG*(s: string): Re {.inline.} =
 
 proc reIU*(s: string): Re {.inline.} =
   ## Constructor of regular expressions with reIgnoreCase and reUtf8 flags.
-  return re(s, {reIgnoreCase, reGlobal})
+  return re(s, {reIgnoreCase, reUtf8})
 
 proc reUG*(s: string): Re {.inline.} =
   ## Constructor of regular expressions with reUtf8 and reGlobal flags.
-  return re(s, {reIgnoreCase, reGlobal})
+  return re(s, {reUtf8, reGlobal})
 
 proc reIUG*(s: string): Re {.inline.} =
   ## Constructor of regular expressions with reIgnoreCase, reUtf8 and
   ## reGlobal flags.
-  return re(s, {reIgnoreCase, reGlobal})
+  return re(s, {reIgnoreCase, reGlobal, reUtf8})
 
 template reGI*(s: string): Re = reGI(s) ## Same as `reIG(s)`
 template reUI*(s: string): Re = reIU(s) ## Same as `reIU(s)`
@@ -199,9 +199,10 @@ proc groupsCount*(re: Re): int =
 
 iterator match*(s: string, pattern: Re, start = 0): string =
   ## Yields all matching substrings of `s[start..]` that match `pattern`.
-  let cs = cast[cstring](cast[int](s.cstring) +% start)
-  for i in matchRaw(cs, s.len - start, pattern.raw, pattern.global, true):
-    var slice = (i.a +% start) .. (i.b +% start)
+  let start0 = start # avoid to be modified during iteration
+  let cs = cast[cstring](cast[int](s.cstring) +% start0)
+  for i in matchRaw(cs, s.len - start0, pattern.raw, pattern.global, true):
+    var slice = (i.a +% start0) .. (i.b +% start0)
     yield if slice.a == -1 or slice.b == -1: "" else: s[slice]
 
 proc match*(s: string, pattern: Re, start = 0): seq[string] =
@@ -222,9 +223,10 @@ proc match*(s: string, pattern: Re, matches: var openArray[string], start = 0): 
 iterator bounds*(s: string, pattern: Re, start = 0): Slice[int] =
   ## Yields all the starting position and end position of `pattern` and
   ## substrings in `s[start..]`.
-  let cs = cast[cstring](cast[int](s.cstring) +% start)
-  for i in matchRaw(cs, s.len - start, pattern.raw, pattern.global, true):
-    var slice = (i.a +% start) .. (i.b +% start)
+  let start0 = start # avoid to be modified during iteration
+  let cs = cast[cstring](cast[int](s.cstring) +% start0)
+  for i in matchRaw(cs, s.len - start0, pattern.raw, pattern.global, true):
+    var slice = (i.a +% start0) .. (i.b +% start0)
     yield slice
 
 proc bounds*(s: string, pattern: Re, start = 0): seq[Slice[int]] {.inline.} =
@@ -293,9 +295,20 @@ proc split*(s: string, pattern: Re, maxsplit = -1): seq[string] =
       count.inc
     else:
       # empty match, split into every char
-      while pos < s.len and (maxsplit < 0 or count < maxsplit):
-        result.add s[pos..pos]
-        pos.inc
+      var
+        insensitive, utf8: cint
+        flags = {reGlobal}
+
+      re_flags(pattern.raw, addr insensitive, addr utf8)
+      if utf8.bool: flags.incl(reUtf8)
+      var re = re(".", flags)
+
+      for match in match(s, re, pos):
+        if maxsplit >= 0 and count >= maxsplit:
+          break
+
+        result.add match
+        pos.inc(match.len)
         count.inc
 
       if pos < s.len:

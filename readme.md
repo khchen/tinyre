@@ -39,6 +39,34 @@ doAssert match("abc123", reI"ABC") == @["abc"]
 doAssert match("中文", reU"..") == @["中文"]
 ```
 
+## Performance
+
+In summary, faster than std/re in small string, but slower than std/re in large string.
+Here is the benchmark result on my computer. The test file and pattern is from https://github.com/mariomka/regex-benchmark.
+
+```
+# small string: "abc123def".contains("\d+")
+# large string: 6.71 MB text file
+#   email: [\w\.+-]+@[\w\.-]+\.[\w\.-]+
+#   uri: [\w]+://[^/\s?#]+[^\s?#]+(?:\?[^\s#]*)?(?:#[^\s]*)?
+#   ipv4: (?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9])
+# compile options: -d:release -d:danger --opt:speed -d:lto
+
+name ............................... min time      avg time    std dv   runs
+tinyre (small string) .............. 0.366 ms      0.379 ms    ±0.018  x1000
+std/re (small string) .............. 5.862 ms      6.218 ms    ±0.171   x797
+nim-regex (small string) .......... 16.132 ms     17.067 ms    ±0.580   x288
+tinyre (large string, email) ..... 140.684 ms    151.663 ms    ±8.625    x33
+std/re (large string, email) ...... 44.793 ms     48.884 ms    ±2.716   x102
+nim-regex (large string, email) .... 3.680 ms      3.921 ms    ±0.132  x1000
+tinyre (large string, uri) ....... 127.465 ms    131.721 ms    ±2.110    x38
+std/re (large string, uri) ........ 40.380 ms     42.812 ms    ±1.175   x117
+nim-regex (large string, uri) ..... 21.400 ms     22.205 ms    ±0.344   x225
+tinyre (large string, ipv4) ...... 182.995 ms    186.441 ms    ±1.057    x27
+std/re (large string, ipv4) ........ 4.854 ms      5.965 ms    ±0.903   x838
+nim-regex (large string, ipv4) ..... 7.569 ms      7.849 ms    ±0.159   x635
+```
+
 ## Docs
 * https://khchen.github.io/tinyre
 
