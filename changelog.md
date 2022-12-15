@@ -1,3 +1,7 @@
+Version 1.2.0
+-------------
+* Add proc multiReplace().
+
 Version 1.1.0
 -------------
 * Fix wrong flags in reIU, reUG, and reIUG.

@@ -81,7 +81,7 @@ when defined(js):
 {.compile: "re.c".}
 
 type
-  ReRaw = distinct pointer
+  ReRaw = ptr object
   Re* = object
     raw: ReRaw
     global: bool
@@ -91,10 +91,7 @@ type
     reGlobal     ## Perform global matching
     reUtf8       ## Perform utf8 matching
 
-proc isNil(r: ReRaw): bool {.borrow.}
-proc `==`(a: ReRaw, b: ReRaw): bool {.borrow.}
-
-proc re_compile(pattern: cstring, i = false.cint, u = true.cint): ReRaw {.importc.}
+proc re_compile(pattern: cstring, i: cint, u: cint): ReRaw {.importc.}
 proc re_free(re: ReRaw) {.importc.}
 proc re_dup(re: ReRaw): ReRaw {.importc.}
 proc re_match(re: ReRaw, text: cstring, L: cint): cstringArray {.importc.}
@@ -341,7 +338,7 @@ proc replacef*(s: string, sub: Re, by: string = "", limit = 0): string =
   ## with the notation `$i` and `$#` (see strutils.\`%\`).
 
   # carefully deal with matches, so that $1 = matches[1] (by default is matches[0])
-  let cs = cast[cstring](cast[int](s.cstring))
+  let cs = s.cstring
   var
     matches = newSeq[string](sub.groupsCount() - 1)
     index = 0
@@ -375,7 +372,7 @@ proc replace*(s: string, sub: Re,
   ## Replaces `sub` in `s` by the resulting strings from the callback.
   ## The callback proc receives the index of the current match (starting with 0),
   ## and an open array with the captures of each match.
-  let cs = cast[cstring](cast[int](s.cstring))
+  let cs = s.cstring
   var
     matches = newSeq[string](sub.groupsCount())
     index = 0
@@ -398,6 +395,24 @@ proc replace*(s: string, sub: Re,
       index = 0
       count.inc
       if limit > 0 and count >= limit: break
+
+  result.add s[pos..^1]
+
+proc multiReplace*(s: string, subs: openArray[tuple[re: Re, by: string]]): string =
+  ## Returns a modified copy of `s` with the substitutions in `subs`
+  ## applied in parallel.
+  var pos = 0
+  while pos < s.len:
+    block searchSubs:
+      for i in 0..<subs.len:
+        if s.startsWith(subs[i].re, pos): # optimize it?
+          var matches = s.match(subs[i].re, pos)
+          addf(result, subs[i].by, matches[1..^1])
+          pos.inc(matches[0].len)
+          break searchSubs
+
+      result.add s[pos]
+      pos.inc
 
   result.add s[pos..^1]
 

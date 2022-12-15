@@ -8,10 +8,11 @@ TinyRE is a Nim wrap for a tiny regex engine less than 10K binary size (loc < 1K
 * Support case-insensitive matching.
 * Support global matching.
 * Support most common regex syntax, including:
-  * Greedy and non-greedy expressions: `*`, `+`, `?`, `*?`, `+?`, `??`
-  * Characters sets: `[xyz]`, `[^xyz]`
+  * Greedy and non-greedy expressions: `*`, `+`, `?`, `*?`, `+?`, `??`.
+  * Characters sets: `[xyz]`, `[a-z]`, `[^xyz]`, `[^m-z]`.
   * Meta characters: `\s`, `\S` ,`\w`, `\W`, `\d`, `\D`, `\n`, `\r`, `\t` etc.
   * Ascii or unicode characters: `\x00`, `\u0000`, `\U00000000`
+  * Alternation operator: `|`.
   * Beginning and end assertions: `^`, `$`.
   * Repetition operators: `{n}`, `{n,m}`, `{n,}`.
   * Group and non-capture group: `(...)`, `(?:...)`.
@@ -44,7 +45,7 @@ doAssert match("中文", reU"..") == @["中文"]
 In summary, faster than std/re in small string, but slower than std/re in large string.
 Here is the benchmark result on my computer. The test file and pattern is from https://github.com/mariomka/regex-benchmark.
 
-```
+```nim
 # small string: "abc123def".contains("\d+")
 # large string: 6.71 MB text file
 #   email: [\w\.+-]+@[\w\.-]+\.[\w\.-]+
@@ -65,6 +66,25 @@ nim-regex (large string, uri) ..... 21.400 ms     22.205 ms    ±0.344   x225
 tinyre (large string, ipv4) ...... 182.995 ms    186.441 ms    ±1.057    x27
 std/re (large string, ipv4) ........ 4.854 ms      5.965 ms    ±0.903   x838
 nim-regex (large string, ipv4) ..... 7.569 ms      7.849 ms    ±0.159   x635
+```
+
+## Code Size
+
+Compare the code size of different regex library.
+
+```nim
+# gcc: version 11.1.0 MinGW-W64
+# compile options: -d:release -d:danger --opt:size -d:lto -d:strip
+
+# test codes
+echo contains("abc123def", "123") # for strutils
+echo contains("abc123def", re"\d+") # for regex library
+
+# Results
+strutils:       65,536 bytes (no dependence)
+std/re:         68,608 bytes (dependence: pcre64.dll: 526,336 bytes)
+tinyre:         75,264 bytes (no dependence)
+nim regex:     296,448 bytes (no dependence)
 ```
 
 ## Docs
