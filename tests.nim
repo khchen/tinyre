@@ -690,6 +690,7 @@ suite "Test Suite for TinyRE":
       split("中文測試", reU"", 2) == @["中", "文", "測試"]
       split("中文", re"") == @["\xE4", "\xB8", "\xAD", "\xE6", "\x96", "\x87"]
       split("中文", reU"") == @["中", "文"]
+      split("a,b;c:d/e", re"\W+", inclSep=true) == @["a", ",", "b", ";", "c", ":", "d", "/", "e"]
 
   test "Test startsWith()":
     check:

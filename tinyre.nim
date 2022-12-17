@@ -7,9 +7,9 @@
 
 ##[
   TinyRE is a Nim wrap for a tiny regex engine based on Rob Pike's VM
-  implementation. Compare to other small regex engine, this engine
+  implementation. Compare to other small regex engines, this engine
   supports unicode and most of common regex syntax, in less than 10K
-  binary size (LOC < 1K), and guarantees that input regex will scale O(n)
+  code size (LOC < 1K), and guarantees that input regex will scale O(n)
   with the size of the string.
 
   **NOTICE: This implementation always return entire pattern as first
@@ -275,21 +275,31 @@ proc endsWith*(s: string, suffix: Re): bool =
 
   return false
 
-proc split*(s: string, pattern: Re, maxsplit = -1): seq[string] =
-  ## Splits the string `s` into a seq of substrings.
+proc split*(s: string, pattern: Re, maxsplit = -1, inclSep = false): seq[string] =
+  ## Splits the string `s` into a seq of substrings. If `maxsplit` is
+  ## specified and is positive, no more than `maxsplit` splits is made.
+  ## If `inclSep` is true, the separator will be included in the result.
+  if maxsplit == 0: # do nothing
+    result.add s
+    return
+
   let cs = s.cstring
   var
     pos = 0
     count = 0
 
   for slice in matchRaw(cs, s.len, pattern.raw, true, false):
-    if maxsplit >= 0 and count >= maxsplit:
-      break
-
     if slice.b >= slice.a: # not empty match
       result.add s[pos..slice.a - 1]
       pos = slice.b + 1
       count.inc
+      if maxsplit >= 0 and count >= maxsplit: break
+
+      if inclSep:
+        result.add s[slice]
+        count.inc
+        if maxsplit >= 0 and count >= maxsplit: break
+
     else:
       # empty match, split into every char
       var
@@ -407,9 +417,10 @@ proc multiReplace*(s: string, subs: openArray[tuple[re: Re, by: string]]): strin
       for i in 0..<subs.len:
         if s.startsWith(subs[i].re, pos): # optimize it?
           var matches = s.match(subs[i].re, pos)
-          addf(result, subs[i].by, matches[1..^1])
-          pos.inc(matches[0].len)
-          break searchSubs
+          if matches[0].len != 0:
+            addf(result, subs[i].by, matches[1..^1])
+            pos.inc(matches[0].len)
+            break searchSubs
 
       result.add s[pos]
       pos.inc
