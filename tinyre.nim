@@ -49,9 +49,11 @@
     \<, \>     Match start-of-word and end-of-word.
     [...]      Match any character from set. Ranges like [a-z] are supported
     [^...]     Match any character but ones from set
-    {n}        Matches exactly n times.
-    {n,}       Matches the preceding character at least n times.
-    {n,m}      Matches the preceding character at least n and at most m times.
+    {n}        Matches exactly n times
+    {n,}       Matches the preceding character at least n times (greedy)
+    {n,m}      Matches the preceding character at least n and at most m times (greedy)
+    {n,}?      Matches the preceding character at least n times (non-greedy)
+    {n,m}?     Matches the preceding character at least n and at most m times (non-greedy)
 
 ]##
 

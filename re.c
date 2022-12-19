@@ -344,50 +344,63 @@ static int _compilecode(const char *re_loc, rcode *prog, int sizecode, int utf8)
       }
       break;
     case '{':;
-      int maxcnt = 0, mincnt = 0, i = 0, size = PC - term, start0 = 0, nojmp = 0;
+      int maxcnt = 0, mincnt = 0, size = PC - term;
+      int split = SPLIT, rsplit = RSPLIT;
       re++;
-      while (isdigit((unsigned char) *re))
+      // {n}, {n,}, or {n,m}
+      if (!isdigit((unsigned char) *re)) return -1;
+      while (isdigit((unsigned char) *re)) {
         mincnt = mincnt * 10 + *re++ - '0';
-      if (*re == ',') {
-        re++;
-        if (*re == '}') {
-          EMIT(PC, RSPLIT);
-          EMIT(PC+1, REL(PC, PC - size));
-          PC += 2;
-          maxcnt = mincnt;
-          nojmp = 1;
-        }
-        while (isdigit((unsigned char) *re))
-          maxcnt = maxcnt * 10 + *re++ - '0';
-      } else
-        maxcnt = mincnt;
-      if (mincnt > 65535 || maxcnt > 65535) return -1;
-      if (mincnt != 0) {
-        for (; i < mincnt-1; i++) {
-          if (code)
-            memcpy(&code[PC], &code[term], size*sizeof(int));
-          PC += size;
-        }
-      } else if (maxcnt == 0 && !nojmp) { // {0} or {0,0}, but no {0,} -> just jump over it
-        INSERT_CODE(term, 2, PC);
-        EMIT(term, JMP);
-        EMIT(term + 1, REL(term, PC));
-        term = PC;
-        break;
-      } else {
-        mincnt++;
-        start0 = 1;
+        if (mincnt > 65535) return -1;
       }
-      for (i = maxcnt-mincnt; i > 0; i--) {
-        EMIT(PC++, SPLIT);
-        EMIT(PC++, REL(PC, PC+((size+2)*i)));
+      if (*re == '}') { // {n}
+        maxcnt = mincnt;
+      } else if (*re == ',') { // {n,} or {n,m}
+        re++;
+        if (*re == '}') { // {n,}
+          maxcnt = -1;
+        } else if (isdigit((unsigned char) *re)) { // {n,m}
+          while (isdigit((unsigned char) *re)) {
+            maxcnt = maxcnt * 10 + *re++ - '0';
+            if (maxcnt > 65535) return -1;
+          }
+          if (*re != '}') return -1;
+        } else {
+          return -1;
+        }
+      } else {
+        return -1;
+      }
+      if (re[1] == '?') { // non-greedy
+        split = RSPLIT;
+        rsplit = SPLIT;
+        re++;
+      }
+      // {0}, {0,}, {0,2}
+      // {1}, {1,}, {1,3}
+      for (int i = 0; i < mincnt - 1; i++) {
         if (code)
           memcpy(&code[PC], &code[term], size*sizeof(int));
         PC += size;
       }
-      if (start0) {
+      if (maxcnt < 0) {
+        EMIT(PC, rsplit);
+        EMIT(PC+1, REL(PC, PC - size));
+        PC += 2;
+      }
+      else if (maxcnt > 0) {
+        int diff = mincnt == 0 ? 1 : 0;
+        for (int i = maxcnt - mincnt - diff; i > 0; i--) {
+          EMIT(PC++, split);
+          EMIT(PC++, REL(PC, PC+((size+2)*i)));
+          if (code)
+            memcpy(&code[PC], &code[term], size*sizeof(int));
+          PC += size;
+        }
+      }
+      if (mincnt == 0) {
         INSERT_CODE(term, 2, PC);
-        EMIT(term, SPLIT);
+        EMIT(term, maxcnt == 0 ? JMP : split);
         EMIT(term + 1, REL(term, PC));
         term = PC;
       }

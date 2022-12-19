@@ -1,3 +1,8 @@
+Version 1.4.0
+-------------
+* Add non-greedy repetition operators {n,m}? and {n,}?.
+* Fix bug in repetition operators.
+
 Version 1.3.0
 -------------
 * Fix bug in multiReplace().

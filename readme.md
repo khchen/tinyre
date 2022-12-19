@@ -18,6 +18,7 @@ and guarantees that input regex will scale O(n) with the size of the string.
   * Alternation operator: `|`.
   * Beginning and end assertions: `^`, `$`.
   * Repetition operators: `{n}`, `{n,m}`, `{n,}`.
+  * Non-greedy repetition operators: `{n,m}?`, `{n,}?`.
   * Group and non-capture group: `(...)`, `(?:...)`.
   * Start-of-word and end-of-word assertions: `\<`, `\>`.
 

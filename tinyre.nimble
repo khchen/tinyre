@@ -6,7 +6,7 @@
 #====================================================================
 
 # Package
-version       = "1.3.0"
+version       = "1.4.0"
 author        = "Ward"
 description   = "TinyRE - Tiny Regex Engine for Nim"
 license       = "MIT"
