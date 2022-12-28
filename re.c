@@ -95,8 +95,7 @@ enum
   /* Assert position */
   WBEG,
   WEND,
-  WB,
-  NB,
+  NOTB,
   BOL,
   EOL,
   /* Other (special) instructions */
@@ -217,10 +216,7 @@ void re_dumpcode(rcode *prog)
 		case WEND:
 			printf("assert wend\n");
 			break;
-		case WB:
-			printf("assert word boundary\n");
-			break;
-		case NB:
+		case NOTB:
 			printf("assert nonword boundary\n");
 			break;
 		case BOL:
@@ -254,8 +250,8 @@ static int _compilecode(const char *re_loc, rcode *prog, int sizecode, int utf8)
         EMIT(PC++, *re == '<' ? WBEG : WEND);
         term = PC;
         break;
-      case 'b': case'B':
-        EMIT(PC++, *re == 'b' ? WB : NB);
+      case 'B':
+        EMIT(PC++, NOTB);
         term = PC;
         break;
       case 'd': case 'D': case 's': case 'S': case 'w': case 'W':
@@ -266,13 +262,14 @@ static int _compilecode(const char *re_loc, rcode *prog, int sizecode, int utf8)
         EMIT(PC++, -1);
         EMIT(PC++, *re);
         break;
-      case 'n': case 'r': case 't': case 'f': case 'v':
+      case 'n': case 'r': case 't': case 'b': case 'f': case 'v':
         term = PC;
         EMIT(PC++, CHAR);
         switch (*re) {
           case 'n': EMIT(PC++, '\n'); break;
           case 'r': EMIT(PC++, '\r'); break;
           case 't': EMIT(PC++, '\t'); break;
+          case 'b': EMIT(PC++, '\b'); break;
           case 'f': EMIT(PC++, '\f'); break;
           case 'v': EMIT(PC++, '\v'); break;
         }
@@ -686,13 +683,13 @@ if (spc > JMP) { \
   nsub->sub[npc[1]] = _sp; \
   npc += 2; \
   goto rec##nn; \
-} else if (spc == WB) { \
-  if ((((sp != s || sp != _sp) && isword(sp)) || !isword(_sp)) || (isword(_sp))) \
+} else if (spc == NOTB) { \
+  if (!((sp == s && sp == _sp) && !isword(sp)) && ((sp == s && sp == _sp) || \
+      (sp == _sp) || isword(sp) != isword(_sp))) \
     deccheck(nn) \
   npc++; goto rec##nn; \
 } else if (spc == WBEG) { \
-  if (((sp != s || sp != _sp) && isword(sp)) \
-      || !isword(_sp)) \
+  if (((sp != s || sp != _sp) && isword(sp)) || !isword(_sp)) \
     deccheck(nn) \
   npc++; goto rec##nn; \
 } else if (spc < 0) { \
@@ -703,7 +700,7 @@ if (spc > JMP) { \
   npc += npc[-1]; \
   fastrec(nn, list, listidx) \
 } else if (spc == WEND) { \
-  if (isword(_sp)) \
+  if (!isword(sp) || isword(_sp)) \
     deccheck(nn) \
   npc++; goto rec##nn; \
 } else if (spc == EOL) { \

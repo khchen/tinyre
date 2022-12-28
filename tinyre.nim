@@ -128,6 +128,7 @@ iterator matchRaw(s: cstring, L0: int, re: ReRaw,
   var
     L = L0
     p = s
+    lastMatch1: cstring
 
   while true:
     var matches = re_match(re, p, cint L)
@@ -143,7 +144,15 @@ iterator matchRaw(s: cstring, L0: int, re: ReRaw,
         slice.a = slice.a -% cast[int](s)
         slice.b = slice.b -% cast[int](s) -% 1
 
-      yield slice
+      if i == 0 and lastMatch1 == matches[1] and
+          cast[pointer](p) == cast[pointer](lastMatch1):
+        # match same anchor again, avoid to yield the same slice twice.
+        # for example, match(" a", re"\<")
+        # first time match "| |a", second time match " ||a"
+        # but yield the same slice because the pattern has no length.
+        discard
+      else:
+        yield slice
 
       if not sub: break
       i.inc(2)
@@ -157,6 +166,7 @@ iterator matchRaw(s: cstring, L0: int, re: ReRaw,
       L -= cast[int](matches[1]) -% cast[int](p)
       p = matches[1]
 
+    lastMatch1 = matches[1]
     case global
     of rgNone:
       break
@@ -262,8 +272,7 @@ proc find*(s: string, pattern: Re, start = 0): int =
   ## Returns the starting position of `pattern` in `s`.
   ## If it does not match, `-1` is returned.
   let cs = cast[cstring](cast[int](s.cstring) +% start)
-  let rg = if pattern.global: rgIncludeLastEmpty else: rgNone
-  for i in matchRaw(cs, s.len - start, pattern.raw, rg, false):
+  for i in matchRaw(cs, s.len - start, pattern.raw, rgNone, false):
     return i.a +% start
   return -1
 
@@ -475,8 +484,7 @@ proc find*(cs: cstring, pattern: Re, length = -1): int =
   ## Otherwise, `cs` will be assumed null-terminated and then length
   ## will be counted at runtime.
   let L = if length < 0: cs.len else: length
-  let rg = if pattern.global: rgIncludeLastEmpty else: rgNone
-  for i in matchRaw(cs, L, pattern.raw, rg, false):
+  for i in matchRaw(cs, L, pattern.raw, rgNone, false):
     return i.a
   return -1
 
