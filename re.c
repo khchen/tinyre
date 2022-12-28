@@ -95,6 +95,8 @@ enum
   /* Assert position */
   WBEG,
   WEND,
+  WB,
+  NB,
   BOL,
   EOL,
   /* Other (special) instructions */
@@ -168,6 +170,71 @@ static int _code(const char *re, int n) {
   return result;
 }
 
+void re_dumpcode(rcode *prog)
+{
+	int pc = 0, i = 0;
+	int *code = prog->insts;
+	while (pc < prog->unilen) {
+		printf("%4d: ", pc); i++;
+		switch(code[pc++]) {
+		default:
+			if (code[pc-1] < 0)
+				printf("rsplit %d (%d) #%d\n", pc + code[pc] + 1, code[pc], code[pc-1]);
+			else
+				printf("split %d (%d) #%d\n", pc + code[pc] + 1, code[pc], code[pc-1]);
+			pc++;
+			break;
+		case JMP:
+			printf("jmp %d (%d)\n", pc + code[pc] + 1, code[pc]);
+			pc++;
+			break;
+		case CHAR:
+			printf("char %c\n", code[pc]);
+			pc++;
+			break;
+		case ANY:
+			printf("any\n");
+			break;
+		case CLASS:;
+			pc += 2;
+			int num = code[pc - 1];
+			printf("class%s %d", (code[pc - 2] ? "" : "not"), num);
+			while (num--) {
+				printf(" 0x%02x-0x%02x", code[pc], code[pc + 1]);
+				pc += 2;
+			}
+			printf("\n");
+			break;
+		case MATCH:
+			printf("match\n");
+			break;
+		case SAVE:
+			printf("save %d\n", code[pc++]);
+			break;
+		case WBEG:
+			printf("assert wbeg\n");
+			break;
+		case WEND:
+			printf("assert wend\n");
+			break;
+		case WB:
+			printf("assert word boundary\n");
+			break;
+		case NB:
+			printf("assert nonword boundary\n");
+			break;
+		case BOL:
+			printf("assert bol\n");
+			break;
+		case EOL:
+			printf("assert eol\n");
+			break;
+		}
+	}
+	printf("unilen: %d, insts: %d, splits: %d, counted insts: %d\n",
+		prog->unilen, prog->len, prog->splits, i);
+}
+
 static int _compilecode(const char *re_loc, rcode *prog, int sizecode, int utf8)
 {
   const char *re = re_loc;
@@ -184,9 +251,11 @@ static int _compilecode(const char *re_loc, rcode *prog, int sizecode, int utf8)
       if (!*re) return -1; /* Trailing backslash */
       switch (*re) {
       case '<': case '>':
-        if (re - re_loc > 2 && re[-2] == '\\')
-          break;
         EMIT(PC++, *re == '<' ? WBEG : WEND);
+        term = PC;
+        break;
+      case 'b': case'B':
+        EMIT(PC++, *re == 'b' ? WB : NB);
         term = PC;
         break;
       case 'd': case 'D': case 's': case 'S': case 'w': case 'W':
@@ -197,14 +266,13 @@ static int _compilecode(const char *re_loc, rcode *prog, int sizecode, int utf8)
         EMIT(PC++, -1);
         EMIT(PC++, *re);
         break;
-      case 'n': case 'r': case 't': case 'b': case 'f': case 'v':
+      case 'n': case 'r': case 't': case 'f': case 'v':
         term = PC;
         EMIT(PC++, CHAR);
         switch (*re) {
           case 'n': EMIT(PC++, '\n'); break;
           case 'r': EMIT(PC++, '\r'); break;
           case 't': EMIT(PC++, '\t'); break;
-          case 'b': EMIT(PC++, '\b'); break;
           case 'f': EMIT(PC++, '\f'); break;
           case 'v': EMIT(PC++, '\v'); break;
         }
@@ -618,6 +686,10 @@ if (spc > JMP) { \
   nsub->sub[npc[1]] = _sp; \
   npc += 2; \
   goto rec##nn; \
+} else if (spc == WB) { \
+  if ((((sp != s || sp != _sp) && isword(sp)) || !isword(_sp)) || (isword(_sp))) \
+    deccheck(nn) \
+  npc++; goto rec##nn; \
 } else if (spc == WBEG) { \
   if (((sp != s || sp != _sp) && isword(sp)) \
       || !isword(_sp)) \
@@ -770,6 +842,7 @@ RE* re_compile(const char *pattern, int insensitive, int utf8) {
     free(re);
     return NULL;
   }
+  // re_dumpcode((rcode *)re->buffer);
   return re;
 }
 
@@ -787,6 +860,10 @@ void re_flags(RE* re, int* insensitive, int* utf8) {
 
 int re_max_matches(RE* re) {
   return re->count;
+}
+
+int re_uc_len(RE* re, const char * s) {
+  return uc_len(s, re->utf8);
 }
 
 void re_free(RE* re) {
