@@ -46,8 +46,9 @@
     \x00       Match hex character code (exactly 2 digits)
     \u0000     Match hex character code (exactly 4 digits)
     \U00000000 Match hex character code (exactly 8 digits)
-    \<, \>     Match start-of-word and end-of-word.
-    [...]      Match any character from set. Ranges like [a-z] are supported
+    \<, \>     Match start-of-word and end-of-word
+    \B         Matches a nonword boundary
+    [...]      Match any character from set. Ranges like [a-z] or [\x00-\u0000] are supported
     [^...]     Match any character but ones from set
     {n}        Matches exactly n times
     {n,}       Matches the preceding character at least n times (greedy)
@@ -93,12 +94,18 @@ type
     reGlobal     ## Perform global matching
     reUtf8       ## Perform utf8 matching
 
-proc re_compile(pattern: cstring, i: cint, u: cint): ReRaw {.importc.}
-proc re_free(re: ReRaw) {.importc.}
-proc re_dup(re: ReRaw): ReRaw {.importc.}
-proc re_match(re: ReRaw, text: cstring, L: cint): cstringArray {.importc.}
-proc re_max_matches(re: ReRaw): cint {.importc.}
-proc re_flags(re: ReRaw, i: ptr cint, u: ptr cint) {.importc.}
+  ReGlobalKind = enum
+    rgNone
+    rgIncludeLastEmpty
+    rgExcludeLastEmpty
+
+proc re_compile(pattern: cstring, i: cint, u: cint): ReRaw {.importc, cdecl.}
+proc re_free(re: ReRaw) {.importc, cdecl.}
+proc re_dup(re: ReRaw): ReRaw {.importc, cdecl.}
+proc re_match(re: ReRaw, text: cstring, L: cint): cstringArray {.importc, cdecl.}
+proc re_max_matches(re: ReRaw): cint {.importc, cdecl.}
+proc re_flags(re: ReRaw, i: ptr cint, u: ptr cint) {.importc, cdecl.}
+proc re_uc_len(re: ReRaw, s: cstring): cint {.importc, cdecl.}
 
 proc `=destroy`(re: var Re) =
   if not re.raw.isNil:
@@ -113,12 +120,20 @@ proc `=copy`(dest: var Re, source: Re) =
   if dest.raw.isNil: raise newException(OutOfMemDefect, "out of memory")
 
 iterator matchRaw(s: cstring, L0: int, re: ReRaw,
-    global: bool, sub: bool): Slice[int] {.closure.} =
+    global: ReGlobalKind, sub: bool): Slice[int] {.closure.} =
+
+  template `===`(a, b: cstring): bool =
+    # must cast to ptr to compare cstring
+    cast[pointer](a) == cast[pointer](b)
 
   assert not re.isNil
+  var insensitive, utf8: cint
+  re_flags(re, addr insensitive, addr utf8)
+
   var
     L = L0
     p = s
+    lastMatch1: cstring
 
   while true:
     var matches = re_match(re, p, cint L)
@@ -134,16 +149,37 @@ iterator matchRaw(s: cstring, L0: int, re: ReRaw,
         slice.a = slice.a -% cast[int](s)
         slice.b = slice.b -% cast[int](s) -% 1
 
-      yield slice
+      if i == 0 and lastMatch1 === matches[1] and p === lastMatch1:
+        # match same anchor again, avoid to yield the same slice twice.
+        # for example, match(" a", re"\<")
+        # first time match "| |a", second time match " ||a"
+        # but yield the same slice because the pattern has no length.
+        discard
+      else:
+        yield slice
 
       if not sub: break
       i.inc(2)
 
-    if cast[pointer](p) == cast[pointer](matches[1]): break # must cast to ptr
-    L -= cast[int](matches[1]) -% cast[int](p)
-    p = matches[1]
+    if p === matches[1]:
+      # zero length captures, advance one character instead of break
+      let uclen = int re_uc_len(re, p)
+      L -= uclen
+      p = cast[cstring](cast[int](p) +% uclen)
+    else:
+      L -= cast[int](matches[1]) -% cast[int](p)
+      p = matches[1]
 
-    if (not global) or (cast[int](p) >=% cast[int](s) +% L0): break
+    lastMatch1 = matches[1]
+    case global
+    of rgNone:
+      break
+    of rgIncludeLastEmpty:
+      if cast[int](p) >% cast[int](s) +% L0:
+        break
+    of rgExcludeLastEmpty:
+      if cast[int](p) >=% cast[int](s) +% L0:
+        break
 
 proc re*(s: string, flags: set[ReFlag] = {}): Re {.inline.} =
   ## Constructor of regular expressions.
@@ -200,7 +236,8 @@ iterator match*(s: string, pattern: Re, start = 0): string =
   ## Yields all matching substrings of `s[start..]` that match `pattern`.
   let start0 = start # avoid to be modified during iteration
   let cs = cast[cstring](cast[int](s.cstring) +% start0)
-  for i in matchRaw(cs, s.len - start0, pattern.raw, pattern.global, true):
+  let rg = if pattern.global: rgIncludeLastEmpty else: rgNone
+  for i in matchRaw(cs, s.len - start0, pattern.raw, rg, true):
     var slice = (i.a +% start0) .. (i.b +% start0)
     yield if slice.a == -1 or slice.b == -1: "" else: s[slice]
 
@@ -224,7 +261,8 @@ iterator bounds*(s: string, pattern: Re, start = 0): Slice[int] =
   ## substrings in `s[start..]`.
   let start0 = start # avoid to be modified during iteration
   let cs = cast[cstring](cast[int](s.cstring) +% start0)
-  for i in matchRaw(cs, s.len - start0, pattern.raw, pattern.global, true):
+  let rg = if pattern.global: rgIncludeLastEmpty else: rgNone
+  for i in matchRaw(cs, s.len - start0, pattern.raw, rg, true):
     var slice = (i.a +% start0) .. (i.b +% start0)
     yield slice
 
@@ -238,7 +276,7 @@ proc find*(s: string, pattern: Re, start = 0): int =
   ## Returns the starting position of `pattern` in `s`.
   ## If it does not match, `-1` is returned.
   let cs = cast[cstring](cast[int](s.cstring) +% start)
-  for i in matchRaw(cs, s.len - start, pattern.raw, pattern.global, false):
+  for i in matchRaw(cs, s.len - start, pattern.raw, rgNone, false):
     return i.a +% start
   return -1
 
@@ -250,7 +288,7 @@ proc startsWith*(s: string, prefix: Re, start = 0): bool =
   ## Returns true if `s[start..]` starts with the pattern `prefix`.
   ## Add prefix `^` (assert start of string) to patten will speed up.
   let cs = cast[cstring](cast[int](s.cstring) +% start)
-  for slice in matchRaw(cs, s.len - start, prefix.raw, false, false):
+  for slice in matchRaw(cs, s.len - start, prefix.raw, rgNone, false):
     return slice.a == 0
   return false
 
@@ -263,14 +301,14 @@ proc endsWith*(s: string, suffix: Re): bool =
     for i in countdown(s.runeLen - 1, 0):
       let start = s.runeOffset(i)
       let cs = cast[cstring](cast[int](s.cstring) +% start)
-      for slice in matchRaw(cs, s.len - start, suffix.raw, false, false):
+      for slice in matchRaw(cs, s.len - start, suffix.raw, rgNone, false):
         if slice.b >= slice.a and start + slice.b == s.len - 1:
           return true
         break
   else:
     for start in countdown(s.len - 1, 0):
       let cs = cast[cstring](cast[int](s.cstring) +% start)
-      for slice in matchRaw(cs, s.len - start, suffix.raw, false, false):
+      for slice in matchRaw(cs, s.len - start, suffix.raw, rgNone, false):
         if slice.b >= slice.a and start + slice.b == s.len - 1:
           return true
         break
@@ -290,7 +328,7 @@ proc split*(s: string, pattern: Re, maxsplit = -1, inclSep = false): seq[string]
     pos = 0
     count = 0
 
-  for slice in matchRaw(cs, s.len, pattern.raw, true, false):
+  for slice in matchRaw(cs, s.len, pattern.raw, rgExcludeLastEmpty, false):
     if slice.b >= slice.a: # not empty match
       result.add s[pos..slice.a - 1]
       pos = slice.b + 1
@@ -302,28 +340,15 @@ proc split*(s: string, pattern: Re, maxsplit = -1, inclSep = false): seq[string]
         count.inc
         if maxsplit >= 0 and count >= maxsplit: break
 
-    else:
-      # empty match, split into every char
-      var
-        insensitive, utf8: cint
-        flags = {reGlobal}
+    else: # empty match, add one character as result
+      let uclen = int re_uc_len(pattern.raw, cast[cstring](cast[int](cs) +% pos))
+      result.add s[pos..pos + uclen-1]
+      pos.inc(uclen)
+      count.inc
+      if maxsplit >= 0 and count >= maxsplit: break
 
-      re_flags(pattern.raw, addr insensitive, addr utf8)
-      if utf8.bool: flags.incl(reUtf8)
-      var re = re(".", flags)
-
-      for match in match(s, re, pos):
-        if maxsplit >= 0 and count >= maxsplit:
-          break
-
-        result.add match
-        pos.inc(match.len)
-        count.inc
-
-      if pos < s.len:
-        result.add s[pos..^1]
-
-      return
+      # avoid last empty string after adding one character
+      if pos >= s.len: return
 
   result.add s[pos..^1]
 
@@ -335,7 +360,7 @@ proc replace*(s: string, sub: Re, by: string = "", limit = 0): string =
     pos = 0
     count = 0
 
-  for slice in matchRaw(cs, s.len, sub.raw, true, false):
+  for slice in matchRaw(cs, s.len, sub.raw, rgExcludeLastEmpty, false):
     if slice.b >= slice.a: # not empty match
       result.add s[pos..slice.a - 1]
       result.add by
@@ -358,7 +383,7 @@ proc replacef*(s: string, sub: Re, by: string = "", limit = 0): string =
     pos = 0
     slice0: Slice[int]
 
-  for slice in matchRaw(cs, s.len, sub.raw, true, true):
+  for slice in matchRaw(cs, s.len, sub.raw, rgExcludeLastEmpty, true):
     if index == 0:
       slice0 = slice
 
@@ -392,7 +417,7 @@ proc replace*(s: string, sub: Re,
     pos = 0
     slice0: Slice[int]
 
-  for slice in matchRaw(cs, s.len, sub.raw, true, true):
+  for slice in matchRaw(cs, s.len, sub.raw, rgExcludeLastEmpty, true):
     if index == 0:
       slice0 = slice
 
@@ -443,7 +468,8 @@ iterator bounds*(cs: cstring, pattern: Re, length = -1): Slice[int] =
   ## Otherwise, `cs` will be assumed null-terminated and then length
   ## will be counted at runtime.
   let L = if length < 0: cs.len else: length
-  for slice in matchRaw(cs, L, pattern.raw, pattern.global, true):
+  let rg = if pattern.global: rgIncludeLastEmpty else: rgNone
+  for slice in matchRaw(cs, L, pattern.raw, rg, true):
     yield slice
 
 proc bounds*(cs: cstring, pattern: Re, length = -1): seq[Slice[int]] {.inline.} =
@@ -462,7 +488,7 @@ proc find*(cs: cstring, pattern: Re, length = -1): int =
   ## Otherwise, `cs` will be assumed null-terminated and then length
   ## will be counted at runtime.
   let L = if length < 0: cs.len else: length
-  for i in matchRaw(cs, L, pattern.raw, pattern.global, false):
+  for i in matchRaw(cs, L, pattern.raw, rgNone, false):
     return i.a
   return -1
 

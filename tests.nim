@@ -14,7 +14,6 @@ import std/[unittest, strformat]
 #   https://github.com/nitely/nim-regex/blob/master/tests/tests.nim
 
 suite "Test Suite for TinyRE":
-
   proc output(pattern: Re, s: string): string =
     for slice in bounds(s, pattern):
       if slice.a < 0 and slice.b < 0:
@@ -707,6 +706,22 @@ suite "Test Suite for TinyRE":
       not contains("弢", reU"\xF0\xAF\xA2\x94")
       not contains("弢", re"\U0002F894")
 
+  test "Test match() and bounds()":
+    check:
+      match("\n \r \t \b \v \f", reG"\n|\r|\t|\b|\v|\f") == @["\n", "\r", "\t", "\b", "\v", "\f"]
+      match("\n \r \t \b \v \f", reG"[\n\r\t\b\v\f]") == @["\n", "\r", "\t", "\b", "\v", "\f"]
+      match("\x00\x01\x02\x03\x04", reG"[\x01-\x03]") == @["\x01", "\x02", "\x03"]
+      match("\x00\x01\x02\x03\x04", reG"[\u0001-\U00000003]") == @["\x01", "\x02", "\x03"]
+      match("中文測試弢", reGU"[\u6211-\U0002F894]") == @["文", "測", "試", "弢"]
+      match("中文測試", reGU"[我-弢]") == @["文", "測", "試"]
+      match("中文測試", reGU"[中-文]") == @["中", "文"]
+      match("a", reG".*?") == @["", ""] # do match at the end of input
+      match("abc", reG".*?") == @["", "", "", ""] # advance one character for empty
+      match("abc|abc", reG"(?:abc)*") == @["abc", "abc"]
+      bounds("|a|b|", reG"\<") == @[1 .. 0, 3 .. 2]
+      bounds("|a|b|", reG"\>") == @[2 .. 1, 4 .. 3]
+      bounds("|a|b|", reG"\B") == @[0 .. -1, 5 .. 4]
+
   test "Test split()":
     check:
       split("a,b,c", re",") == @["a", "b", "c"]
@@ -716,7 +731,6 @@ suite "Test Suite for TinyRE":
       split(",,", re",") == @["", "", ""]
       split("abc", re"") == @["a", "b", "c"]
       split("ab", re"") == @["a", "b"]
-      split("ab", re"\b") == @["ab"]
       split("a b", re" ") == @["a", "b"]
       split(",a,Ϊ,Ⓐ,弢,", reU",") == @["", "a", "Ϊ", "Ⓐ", "弢", ""]
       split("弢", reU"\xAF") == @["弢"]

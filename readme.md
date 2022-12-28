@@ -20,7 +20,7 @@ and guarantees that input regex will scale O(n) with the size of the string.
   * Repetition operators: `{n}`, `{n,m}`, `{n,}`.
   * Non-greedy repetition operators: `{n,m}?`, `{n,}?`.
   * Group and non-capture group: `(...)`, `(?:...)`.
-  * Start-of-word and end-of-word assertions: `\<`, `\>`.
+  * Start-of-word, end-of-word, and nonword boundary assertions: `\<`, `\>`, `\B`.
 
 ## Examples
 ```nim
