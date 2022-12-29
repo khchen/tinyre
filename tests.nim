@@ -14,7 +14,6 @@ import std/[unittest, strformat]
 #   https://github.com/nitely/nim-regex/blob/master/tests/tests.nim
 
 suite "Test Suite for TinyRE":
-
   proc output(pattern: Re, s: string): string =
     for slice in bounds(s, pattern):
       if slice.a < 0 and slice.b < 0:
