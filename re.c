@@ -88,7 +88,8 @@ struct rcode
 enum
 {
   /* Instructions which consume input bytes */
-  CHAR = 1,
+  /* SPLIT must odd number */
+  CHAR = 0,
   CLASS,
   MATCH,
   ANY,

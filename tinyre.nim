@@ -121,6 +121,10 @@ proc `=copy`(dest: var Re, source: Re) =
 iterator matchRaw(s: cstring, L0: int, re: ReRaw,
     global: ReGlobalKind, sub: bool): Slice[int] {.closure.} =
 
+  template `===`(a, b: cstring): bool =
+    # must cast to ptr to compare cstring
+    cast[pointer](a) == cast[pointer](b)
+
   assert not re.isNil
   var insensitive, utf8: cint
   re_flags(re, addr insensitive, addr utf8)
@@ -144,8 +148,7 @@ iterator matchRaw(s: cstring, L0: int, re: ReRaw,
         slice.a = slice.a -% cast[int](s)
         slice.b = slice.b -% cast[int](s) -% 1
 
-      if i == 0 and lastMatch1 == matches[1] and
-          cast[pointer](p) == cast[pointer](lastMatch1):
+      if i == 0 and lastMatch1 === matches[1] and p === lastMatch1:
         # match same anchor again, avoid to yield the same slice twice.
         # for example, match(" a", re"\<")
         # first time match "| |a", second time match " ||a"
@@ -157,7 +160,7 @@ iterator matchRaw(s: cstring, L0: int, re: ReRaw,
       if not sub: break
       i.inc(2)
 
-    if cast[pointer](p) == cast[pointer](matches[1]): # must cast to ptr to compare
+    if p === matches[1]:
       # zero length captures, advance one character instead of break
       let uclen = int re_uc_len(re, p)
       L -= uclen
