@@ -98,13 +98,13 @@ type
     rgIncludeLastEmpty
     rgExcludeLastEmpty
 
-proc re_compile(pattern: cstring, i: cint, u: cint): ReRaw {.importc.}
-proc re_free(re: ReRaw) {.importc.}
-proc re_dup(re: ReRaw): ReRaw {.importc.}
-proc re_match(re: ReRaw, text: cstring, L: cint): cstringArray {.importc.}
-proc re_max_matches(re: ReRaw): cint {.importc.}
-proc re_flags(re: ReRaw, i: ptr cint, u: ptr cint) {.importc.}
-proc re_uc_len(re: ReRaw, s: cstring): cint {.importc.}
+proc re_compile(pattern: cstring, i: cint, u: cint): ReRaw {.importc, cdecl.}
+proc re_free(re: ReRaw) {.importc, cdecl.}
+proc re_dup(re: ReRaw): ReRaw {.importc, cdecl.}
+proc re_match(re: ReRaw, text: cstring, L: cint): cstringArray {.importc, cdecl.}
+proc re_max_matches(re: ReRaw): cint {.importc, cdecl.}
+proc re_flags(re: ReRaw, i: ptr cint, u: ptr cint) {.importc, cdecl.}
+proc re_uc_len(re: ReRaw, s: cstring): cint {.importc, cdecl.}
 
 proc `=destroy`(re: var Re) =
   if not re.raw.isNil:

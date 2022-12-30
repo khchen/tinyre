@@ -170,6 +170,105 @@ static int _code(const char *re, int n) {
   return result;
 }
 
+// void re_dumpcode(rcode *prog)
+// {
+// 	int pc = 0, i = 0;
+// 	int *code = prog->insts;
+// 	while (pc < prog->unilen) {
+// 		printf("%4d: ", pc); i++;
+// 		switch(code[pc++]) {
+// 		default:
+// 			if (code[pc-1] < 0)
+// 				printf("rsplit %d (%d) #%d\n", pc + code[pc] + 1, code[pc], code[pc-1]);
+// 			else
+// 				printf("split %d (%d) #%d\n", pc + code[pc] + 1, code[pc], code[pc-1]);
+// 			pc++;
+// 			break;
+// 		case JMP:
+// 			printf("jmp %d (%d)\n", pc + code[pc] + 1, code[pc]);
+// 			pc++;
+// 			break;
+// 		case CHAR:
+// 			printf("char %c\n", code[pc]);
+// 			pc++;
+// 			break;
+// 		case ANY:
+// 			printf("any\n");
+// 			break;
+// 		case CLASS:;
+// 			pc += 2;
+// 			int num = code[pc - 1];
+// 			printf("class%s %d", (code[pc - 2] ? "" : "not"), num);
+// 			while (num--) {
+// 				printf(" 0x%02x-0x%02x", code[pc], code[pc + 1]);
+// 				pc += 2;
+// 			}
+// 			printf("\n");
+// 			break;
+// 		case MATCH:
+// 			printf("match\n");
+// 			break;
+// 		case SAVE:
+// 			printf("save %d\n", code[pc++]);
+// 			break;
+// 		case WBEG:
+// 			printf("assert wbeg\n");
+// 			break;
+// 		case WEND:
+// 			printf("assert wend\n");
+// 			break;
+// 		case NOTB:
+// 			printf("assert not bondary\n");
+// 			break;
+// 		case BOL:
+// 			printf("assert bol\n");
+// 			break;
+// 		case EOL:
+// 			printf("assert eol\n");
+// 			break;
+// 		}
+// 	}
+// 	printf("unilen: %d, insts: %d, splits: %d, counted insts: %d\n",
+// 		prog->unilen, prog->len, prog->splits, i);
+// }
+
+static int token(const char *re0, int* forward, int utf8) {
+  const char *re = re0;
+  switch (*re) {
+    case 0:
+      return -1;
+
+    case '\\':
+      re++;
+      *forward = 2;
+      switch (*re) {
+        case 'd': case 'D': case 'w': case 'W': case 's': case 'S':
+          return -(*re);
+
+        case 'n': return '\n';
+        case 'r': return '\r';
+        case 't': return '\t';
+        case 'b': return '\b';
+        case 'f': return '\f';
+        case 'v': return '\v';
+        // case '\\': return '\\'; // deal '\' by fall-through
+
+        case 'x': *forward = 2; goto _hex;
+        case 'u': *forward = 4; goto _hex;
+        case 'U': *forward = 8; _hex:
+          int ch = _code(re, *forward);
+          if (ch < 0) return -1;
+          *forward += 2;
+          return ch;
+      }
+      // fall-through -> skip the '\'
+
+    default:
+      *forward = re - re0 + uc_len(re, utf8);
+      return uc_code(re, utf8);
+  }
+}
+
 static int _compilecode(const char *re_loc, rcode *prog, int sizecode, int utf8)
 {
   const char *re = re_loc;
@@ -178,6 +277,7 @@ static int _compilecode(const char *re_loc, rcode *prog, int sizecode, int utf8)
   int alt_label = 0, c;
   int alt_stack[4096], altc = 0;
   int cap_stack[4096 * 5], capc = 0;
+  int n;
 
   while (*re) {
     switch (*re) {
@@ -213,30 +313,18 @@ static int _compilecode(const char *re_loc, rcode *prog, int sizecode, int utf8)
           case 'v': EMIT(PC++, '\v'); break;
         }
         break;
-      case 'x':
+
+      case 'x': n = 2; goto _hex;
+      case 'u': n = 4; goto _hex;
+      case 'U': n = 8; _hex:
         term = PC;
-        int ch = _code(re, 2);
+        int ch = _code(re, n);
         if (ch < 0) return -1;
-        re += 2;
+        re += n;
         EMIT(PC++, CHAR);
         EMIT(PC++, ch);
         break;
-      case 'u':
-        term = PC;
-        int ch4 = _code(re, 4);
-        if (ch4 < 0) return -1;
-        re += 4;
-        EMIT(PC++, CHAR);
-        EMIT(PC++, ch4);
-        break;
-      case 'U':
-        term = PC;
-        int ch8 = _code(re, 8);
-        if (ch8 < 0) return -1;
-        re += 8;
-        EMIT(PC++, CHAR);
-        EMIT(PC++, ch8);
-        break;
+
       default: goto _default;
       }
       break;
@@ -261,47 +349,30 @@ static int _compilecode(const char *re_loc, rcode *prog, int sizecode, int utf8)
       } else
         EMIT(PC++, 1);
       PC++; /* Skip "# of pairs" byte */
-      for (cnt = 0; *re != ']'; cnt++) {
-        if (*re == '\\') {
-          re++;
-          switch (*re) {
-          case 'd': case 'D': case 'w': case 'W': case 's': case 'S':
-            EMIT(PC++, -1); EMIT(PC++, *re); re++; continue;
-          case 'n': EMIT(PC++, '\n'); EMIT(PC++, '\n'); re++; continue;
-          case 'r': EMIT(PC++, '\r'); EMIT(PC++, '\r'); re++; continue;
-          case 't': EMIT(PC++, '\t'); EMIT(PC++, '\t'); re++; continue;
-          case 'b': EMIT(PC++, '\b'); EMIT(PC++, '\f'); re++; continue;
-          case 'f': EMIT(PC++, '\f'); EMIT(PC++, '\f'); re++; continue;
-          case 'v': EMIT(PC++, '\v'); EMIT(PC++, '\v'); re++; continue;
-          case 'x': {
-              int ch = _code(re, 2);
-              if (ch < 0) return -1;
-              EMIT(PC++, ch); EMIT(PC++, ch);
-              re += 3;
-              continue;
-            }
-          case 'u': {
-              int ch4 = _code(re, 4);
-              if (ch4 < 0) return -1;
-              EMIT(PC++, ch4); EMIT(PC++, ch4);
-              re += 5;
-              continue;
-            }
-          case 'U': {
-              int ch8 = _code(re, 8);
-              if (ch8 < 0) return -1;
-              EMIT(PC++, ch8); EMIT(PC++, ch8);
-              re += 9;
-              continue;
-            }
-          }
+
+      cnt = 0;
+      while (*re != ']') {
+        int forward;
+        int tok = token(re, &forward, utf8);
+        if (tok == -1) return -1;
+        re += forward;
+
+        if (tok < 0) { // \d\D\s\S\w\W etc.
+          EMIT(PC++, -1);
+          EMIT(PC++, -tok);
+          cnt++;
+          continue;
         }
-        if (!*re) return -1;
-        c = uc_code(re, utf8); EMIT(PC++, c); c = uc_len(re, utf8);
-        if (re[c] == '-' && re[c+1] != ']')
-          re += c+1;
-        c = uc_code(re, utf8); EMIT(PC++, c); c = uc_len(re, utf8);
-        re += c;
+
+        EMIT(PC++, tok);
+        if (*re == '-' && re[1] != ']') {
+          re++; // skip '-'
+          tok = token(re, &forward, utf8);
+          re += forward;
+          if (tok < 0) return -1; // not alow \d\D\s\S\w\W here
+        }
+        EMIT(PC++, tok);
+        cnt++;
       }
       EMIT(term + 2, cnt);
       break;
@@ -778,6 +849,7 @@ RE* re_compile(const char *pattern, int insensitive, int utf8) {
     free(re);
     return NULL;
   }
+  // re_dumpcode((rcode *)re->buffer);
   return re;
 }
 
