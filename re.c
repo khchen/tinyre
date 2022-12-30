@@ -285,14 +285,11 @@ static int _compilecode(const char *re_loc, rcode *prog, int sizecode, int utf8)
       re++;
       if (!*re) return -1; /* Trailing backslash */
       switch (*re) {
-      case '<': case '>':
-        EMIT(PC++, *re == '<' ? WBEG : WEND);
+      case '<': case '>': case 'B':
+        EMIT(PC++, *re == '<' ? WBEG : (*re == '>' ? WEND : NOTB ));
         term = PC;
         break;
-      case 'B':
-        EMIT(PC++, NOTB);
-        term = PC;
-        break;
+
       case 'd': case 'D': case 's': case 'S': case 'w': case 'W':
         term = PC;
         EMIT(PC++, CLASS);
