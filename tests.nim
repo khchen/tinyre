@@ -706,6 +706,15 @@ suite "Test Suite for TinyRE":
       not contains("弢", reU"\xF0\xAF\xA2\x94")
       not contains("弢", re"\U0002F894")
 
+  test "Test match() and bounds()":
+    check:
+      match("a", reG".*?") == @["", ""] # do match at the end of input
+      match("abc", reG".*?") == @["", "", "", ""] # advance one character for empty
+      match("abc|abc", reG"(?:abc)*") == @["abc", "abc"]
+      bounds("|a|b|", reG"\<") == @[1 .. 0, 3 .. 2]
+      bounds("|a|b|", reG"\>") == @[2 .. 1, 4 .. 3]
+      bounds("|a|b|", reG"\B") == @[0 .. -1, 5 .. 4]
+
   test "Test split()":
     check:
       split("a,b,c", re",") == @["a", "b", "c"]
