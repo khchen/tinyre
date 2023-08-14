@@ -1,3 +1,7 @@
+Version 1.5.1
+-------------
+* Update for Nim Compiler 2.0.
+
 Version 1.5.0
 -------------
 * Add nonword boundary assertion (`\B`).

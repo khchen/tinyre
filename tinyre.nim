@@ -1,7 +1,7 @@
 #====================================================================
 #
-#             TinyRE - Tiny Regex Engine for Nim
-#                  Copyright (c) 2022 Ward
+#             TinyRE - A Tiny Regex Engine for Nim
+#              Copyright (c) Chen Kai-Hung, Ward
 #
 #====================================================================
 
@@ -107,10 +107,16 @@ proc re_max_matches(re: ReRaw): cint {.importc, cdecl.}
 proc re_flags(re: ReRaw, i: ptr cint, u: ptr cint) {.importc, cdecl.}
 proc re_uc_len(re: ReRaw, s: cstring): cint {.importc, cdecl.}
 
-proc `=destroy`(re: var Re) =
-  if not re.raw.isNil:
-    re_free(re.raw)
-    re.raw = ReRaw(nil)
+when (NimMajor, NimMinor) >= (2, 0):
+  proc `=destroy`(re: Re) =
+    if not re.raw.isNil:
+      re_free(re.raw)
+
+else:
+  proc `=destroy`(re: var Re) =
+    if not re.raw.isNil:
+      re_free(re.raw)
+      re.raw = ReRaw(nil)
 
 proc `=copy`(dest: var Re, source: Re) =
   if dest.raw == source.raw: return

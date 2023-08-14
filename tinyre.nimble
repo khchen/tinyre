@@ -1,14 +1,14 @@
 #====================================================================
 #
-#             TinyRE - Tiny Regex Engine for Nim
-#                  Copyright (c) 2022 Ward
+#             TinyRE - A Tiny Regex Engine for Nim
+#              Copyright (c) Chen Kai-Hung, Ward
 #
 #====================================================================
 
 # Package
-version       = "1.5.0"
+version       = "1.5.1"
 author        = "Ward"
-description   = "TinyRE - Tiny Regex Engine for Nim"
+description   = "TinyRE - A Tiny Regex Engine for Nim"
 license       = "MIT"
 skipDirs      = @["docs"]
 installFiles  = @["re.c"]

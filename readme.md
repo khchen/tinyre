@@ -102,7 +102,7 @@ nim-regex (large string, ipv4) ..... 7.569 ms      7.849 ms    ±0.159   x635
 * [Regular Expression Matching: the Virtual Machine Approach](https://swtch.com/~rsc/regexp/regexp2.html "Regular Expression Matching: the Virtual Machine Approach") by Russel Cox
 
 ## License
-Copyright (c) 2022 Kai-Hung Chen, Ward. All rights reserved.
+Copyright (c) Chen Kai-Hung, Ward. All rights reserved.
 
 ## Donate
 If this project help you reduce time to develop, you can give me a cup of coffee :)

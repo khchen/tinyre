@@ -1,7 +1,7 @@
 #====================================================================
 #
-#             TinyRE - Tiny Regex Engine for Nim
-#                  Copyright (c) 2022 Ward
+#             TinyRE - A Tiny Regex Engine for Nim
+#              Copyright (c) Chen Kai-Hung, Ward
 #
 #====================================================================
 

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2022 Kai-Hung Chen, Ward. All rights reserved.
+Copyright (c) Chen Kai-Hung, Ward. All rights reserved.
 
 Modifications:
   * Add meta characters: \n \r \t \b \v \f \s \S \d \D \w \W \B
