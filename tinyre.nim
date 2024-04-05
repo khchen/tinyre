@@ -107,23 +107,25 @@ proc re_max_matches(re: ReRaw): cint {.importc, cdecl.}
 proc re_flags(re: ReRaw, i: ptr cint, u: ptr cint) {.importc, cdecl.}
 proc re_uc_len(re: ReRaw, s: cstring): cint {.importc, cdecl.}
 
-when (NimMajor, NimMinor) >= (2, 0):
-  proc `=destroy`(re: Re) =
-    if not re.raw.isNil:
-      re_free(re.raw)
+const arcLike = defined(gcArc) or defined(gcAtomicArc) or defined(gcOrc)
 
-else:
-  proc `=destroy`(re: var Re) =
-    if not re.raw.isNil:
-      re_free(re.raw)
-      re.raw = ReRaw(nil)
+when arcLike:
+  when defined(nimAllowNonVarDestructor):
+    proc `=destroy`(re: Re) =
+      if not re.raw.isNil:
+        re_free(re.raw)
+  else:
+    proc `=destroy`(re: var Re) =
+      if not re.raw.isNil:
+        re_free(re.raw)
+        re.raw = ReRaw(nil)
 
-proc `=copy`(dest: var Re, source: Re) =
-  if dest.raw == source.raw: return
-  `=destroy`(dest)
-  wasMoved(dest)
-  dest.raw = re_dup(source.raw)
-  if dest.raw.isNil: raise newException(OutOfMemDefect, "out of memory")
+  proc `=copy`(dest: var Re, source: Re) =
+    if dest.raw == source.raw: return
+    `=destroy`(dest)
+    wasMoved(dest)
+    dest.raw = re_dup(source.raw)
+    if dest.raw.isNil: raise newException(OutOfMemDefect, "out of memory")
 
 iterator matchRaw(s: cstring, L0: int, re: ReRaw,
     global: ReGlobalKind, sub: bool): Slice[int] {.closure.} =
