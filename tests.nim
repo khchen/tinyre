@@ -788,7 +788,6 @@ suite "Test Suite for TinyRE":
       replacef("abcabc", re"(abc)*", "m($1)") == "m(abc)"
       replacef("abcabc", re"(abc*)", "m($1)") == "m(abc)m(abc)"
       replacef("abcabc", re"(abc)", "m($1)") == "m(abc)m(abc)"
-      replacef("abcabc", re"(abc)", "m($1)") == "m(abc)m(abc)"
       replacef("abcab", re"(abc)", "m($1)") == "m(abc)ab"
       replacef("abcabc", re"((abc)*)", "m($1) m($2)") == "m(abcabc) m(abc)"
       replacef("abcabc", re"((a)bc)*", "m($1) m($2)") == "m(abc) m(a)"

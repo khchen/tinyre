@@ -1,3 +1,7 @@
+Version 1.5.2
+-------------
+* Fix destructors compatibility.
+
 Version 1.5.1
 -------------
 * Update for Nim Compiler 2.0.

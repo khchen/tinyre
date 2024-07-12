@@ -107,7 +107,8 @@ proc re_max_matches(re: ReRaw): cint {.importc, cdecl.}
 proc re_flags(re: ReRaw, i: ptr cint, u: ptr cint) {.importc, cdecl.}
 proc re_uc_len(re: ReRaw, s: cstring): cint {.importc, cdecl.}
 
-when (NimMajor, NimMinor) >= (2, 0):
+const arcLike = defined(gcArc) or defined(gcAtomicArc) or defined(gcOrc)
+when defined(nimAllowNonVarDestructor) and arcLike:
   proc `=destroy`(re: Re) =
     if not re.raw.isNil:
       re_free(re.raw)
