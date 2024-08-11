@@ -34,7 +34,6 @@
     \f         Match form feed character
     \v         Match vertical tab character
     \t         Match horizontal tab character
-    \b         Match backspace character
     +          Match one or more times (greedy)
     +?         Match one or more times (non-greedy)
     *          Match zero or more times (greedy)
@@ -47,6 +46,7 @@
     \u0000     Match hex character code (exactly 4 digits)
     \U00000000 Match hex character code (exactly 8 digits)
     \<, \>     Match start-of-word and end-of-word
+    \b         Matches a word boundary
     \B         Matches a nonword boundary
     [...]      Match any character from set. Ranges like [a-z] or [\x00-\u0000] are supported
     [^...]     Match any character but ones from set
@@ -102,7 +102,7 @@ type
 proc re_compile(pattern: cstring, i: cint, u: cint): ReRaw {.importc, cdecl.}
 proc re_free(re: ReRaw) {.importc, cdecl.}
 proc re_dup(re: ReRaw): ReRaw {.importc, cdecl.}
-proc re_match(re: ReRaw, text: cstring, L: cint): cstringArray {.importc, cdecl.}
+proc re_match(re: ReRaw, text: cstring, L: cint, cont: cstring): cstringArray {.importc, cdecl.}
 proc re_max_matches(re: ReRaw): cint {.importc, cdecl.}
 proc re_flags(re: ReRaw, i: ptr cint, u: ptr cint) {.importc, cdecl.}
 proc re_uc_len(re: ReRaw, s: cstring): cint {.importc, cdecl.}
@@ -141,9 +141,10 @@ iterator matchRaw(s: cstring, L0: int, re: ReRaw,
     L = L0
     p = s
     lastMatch1: cstring
+    cont: cstring = nil
 
   while true:
-    var matches = re_match(re, p, cint L)
+    var matches = re_match(re, p, cint L, cont)
     if matches.isNil: break
 
     var i = 0
@@ -170,12 +171,14 @@ iterator matchRaw(s: cstring, L0: int, re: ReRaw,
 
     if p === matches[1]:
       # zero length captures, advance one character instead of break
+      cont = p
       let uclen = int re_uc_len(re, p)
       L -= uclen
       p = cast[cstring](cast[int](p) +% uclen)
     else:
       L -= cast[int](matches[1]) -% cast[int](p)
       p = matches[1]
+      cont = cast[cstring](cast[int](p) -% 1)
 
     lastMatch1 = matches[1]
     case global
@@ -246,7 +249,7 @@ iterator match*(s: string, pattern: Re, start = 0): string =
   let rg = if pattern.global: rgIncludeLastEmpty else: rgNone
   for i in matchRaw(cs, s.len - start0, pattern.raw, rg, true):
     var slice = (i.a +% start0) .. (i.b +% start0)
-    yield if slice.a == -1 or slice.b == -1: "" else: s[slice]
+    yield if slice.b >= slice.a and slice.a >= 0: s[slice] else: ""
 
 proc match*(s: string, pattern: Re, start = 0): seq[string] =
   ## Returns all matching substrings of `s[start..]` that match `pattern`.
@@ -271,7 +274,7 @@ iterator bounds*(s: string, pattern: Re, start = 0): Slice[int] =
   let rg = if pattern.global: rgIncludeLastEmpty else: rgNone
   for i in matchRaw(cs, s.len - start0, pattern.raw, rg, true):
     var slice = (i.a +% start0) .. (i.b +% start0)
-    yield slice
+    yield if i.a == -1 and i.b == -1: -1 .. -1 else: slice
 
 proc bounds*(s: string, pattern: Re, start = 0): seq[Slice[int]] {.inline.} =
   ## Returns all the starting position and end position of `pattern` and
@@ -284,7 +287,7 @@ proc find*(s: string, pattern: Re, start = 0): int =
   ## If it does not match, `-1` is returned.
   let cs = cast[cstring](cast[int](s.cstring) +% start)
   for i in matchRaw(cs, s.len - start, pattern.raw, rgNone, false):
-    return i.a +% start
+    if i.b >= i.a and i.a >= 0: return i.a +% start
   return -1
 
 proc contains*(s: string, pattern: Re, start = 0): bool {.inline.} =
@@ -336,7 +339,7 @@ proc split*(s: string, pattern: Re, maxsplit = -1, inclSep = false): seq[string]
     count = 0
 
   for slice in matchRaw(cs, s.len, pattern.raw, rgExcludeLastEmpty, false):
-    if slice.b >= slice.a: # not empty match
+    if slice.b >= slice.a and slice.a >= 0: # not empty match
       result.add s[pos..slice.a - 1]
       pos = slice.b + 1
       count.inc
@@ -368,7 +371,7 @@ proc replace*(s: string, sub: Re, by: string = "", limit = 0): string =
     count = 0
 
   for slice in matchRaw(cs, s.len, sub.raw, rgExcludeLastEmpty, false):
-    if slice.b >= slice.a: # not empty match
+    if slice.b >= slice.a and slice.a >= 0: # not empty match
       result.add s[pos..slice.a - 1]
       result.add by
       pos = slice.b + 1
@@ -382,29 +385,32 @@ proc replacef*(s: string, sub: Re, by: string = "", limit = 0): string =
   ## with the notation `$i` and `$#` (see strutils.\`%\`).
 
   # carefully deal with matches, so that $1 = matches[1] (by default is matches[0])
-  let cs = s.cstring
+  let
+    cs = s.cstring
+    groupsCount = sub.groupsCount()
+
   var
-    matches = newSeq[string](sub.groupsCount() - 1)
+    matches = newSeq[string](groupsCount - 1)
     index = 0
     count = 0
     pos = 0
-    slice0: Slice[int]
+    slice0 = -1 .. -1
 
   for slice in matchRaw(cs, s.len, sub.raw, rgExcludeLastEmpty, true):
-    if index == 0:
-      slice0 = slice
-
-    else:
+    if slice0.a < 0: slice0 = slice
+    if index >= 1 and slice.b >= slice.a and slice.a >= 0: # not empty match
       matches[index - 1] = s[slice]
 
     index.inc
-
     if index > matches.len:
-      result.add s[pos..slice0.a - 1]
-      result.addf(by, matches)
-      pos = slice0.b + 1
+      if slice0.a >= 0:
+        result.add s[pos..slice0.a - 1]
+        result.addf(by, matches)
+        pos = slice0.b + 1
 
       index = 0
+      slice0 = -1 .. -1
+      matches = newSeq[string](groupsCount - 1)
       count.inc
       if limit > 0 and count >= limit: break
 
@@ -416,27 +422,32 @@ proc replace*(s: string, sub: Re,
   ## Replaces `sub` in `s` by the resulting strings from the callback.
   ## The callback proc receives the index of the current match (starting with 0),
   ## and an open array with the captures of each match.
-  let cs = s.cstring
+  let
+    cs = s.cstring
+    groupsCount = sub.groupsCount()
+
   var
-    matches = newSeq[string](sub.groupsCount())
+    matches = newSeq[string](groupsCount)
     index = 0
     count = 0
     pos = 0
-    slice0: Slice[int]
+    slice0 = -1 .. -1
 
   for slice in matchRaw(cs, s.len, sub.raw, rgExcludeLastEmpty, true):
-    if index == 0:
-      slice0 = slice
+    if slice.b >= slice.a and slice.a >= 0: # not empty match
+      matches[index] = s[slice]
+      if slice0.a < 0: slice0 = slice
 
-    matches[index] = s[slice]
     index.inc
-
     if index == matches.len:
-      result.add s[pos..slice0.a - 1]
-      result.add by(count, matches)
-      pos = slice0.b + 1
+      if slice0.a >= 0:
+        result.add s[pos..slice0.a - 1]
+        result.add by(count, matches)
+        pos = slice0.b + 1
 
       index = 0
+      slice0 = -1 .. -1
+      matches = newSeq[string](groupsCount)
       count.inc
       if limit > 0 and count >= limit: break
 

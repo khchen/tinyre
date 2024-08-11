@@ -1,3 +1,9 @@
+Version 1.6.0
+-------------
+* Add word boundary assertion (`\b`). Breaking change! For the original `\b`, use `\x08` instead.
+* Fix the `\B` assertion, hoping the behavior will be the same as in PCRE.
+* Fix bugs related to zero-length matches.
+
 Version 1.5.2
 -------------
 * Fix destructors compatibility.

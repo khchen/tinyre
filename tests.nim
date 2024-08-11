@@ -7,6 +7,7 @@
 
 import tinyre
 import std/[unittest, strformat]
+from std/re as pcre import nil
 
 # some source for the tests:
 #   https://github.com/kyx0r/pikevm/blob/master/test.sh
@@ -708,8 +709,8 @@ suite "Test Suite for TinyRE":
 
   test "Test match() and bounds()":
     check:
-      match("\n \r \t \b \v \f", reG"\n|\r|\t|\b|\v|\f") == @["\n", "\r", "\t", "\b", "\v", "\f"]
-      match("\n \r \t \b \v \f", reG"[\n\r\t\b\v\f]") == @["\n", "\r", "\t", "\b", "\v", "\f"]
+      match("\n \r \t \b \v \f", reG"\n|\r|\t|\x08|\v|\f") == @["\n", "\r", "\t", "\b", "\v", "\f"]
+      match("\n \r \t \b \v \f", reG"[\n\r\t\x08\v\f]") == @["\n", "\r", "\t", "\b", "\v", "\f"]
       match("\x00\x01\x02\x03\x04", reG"[\x01-\x03]") == @["\x01", "\x02", "\x03"]
       match("\x00\x01\x02\x03\x04", reG"[\u0001-\U00000003]") == @["\x01", "\x02", "\x03"]
       match("中文測試弢", reGU"[\u6211-\U0002F894]") == @["文", "測", "試", "弢"]
@@ -721,6 +722,18 @@ suite "Test Suite for TinyRE":
       bounds("|a|b|", reG"\<") == @[1 .. 0, 3 .. 2]
       bounds("|a|b|", reG"\>") == @[2 .. 1, 4 .. 3]
       bounds("|a|b|", reG"\B") == @[0 .. -1, 5 .. 4]
+
+    for text in [
+      "hello world", "test123",
+      " Nim language ", "Nim language ", " Nim language",
+      "abc123 def456", "cat_dog", "test 123 word123",
+      "beginning middle end",
+      "|word|", "|hello|world|", "|123|abc|",
+      "|Test|cases|", "|-|_|"
+    ]:
+      check:
+        match(text, reG"\B.") == pcre.findAll(text, pcre.re"\B.")
+        match(text, reG"\b.") == pcre.findAll(text, pcre.re"\b.")
 
   test "Test split()":
     check:

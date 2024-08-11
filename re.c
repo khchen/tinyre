@@ -89,13 +89,14 @@ enum
 {
   /* Instructions which consume input bytes */
   /* SPLIT must odd number */
-  CHAR = 0,
+  CHAR = 1,
   CLASS,
   MATCH,
   ANY,
   /* Assert position */
   WBEG,
   WEND,
+  WB,
   NOTB,
   BOL,
   EOL,
@@ -187,7 +188,6 @@ static int token(const char *re0, int* forward, int utf8) {
         case 'n': return '\n';
         case 'r': return '\r';
         case 't': return '\t';
-        case 'b': return '\b';
         case 'f': return '\f';
         case 'v': return '\v';
         // case '\\': return '\\'; // deal '\' by fall-through
@@ -224,8 +224,8 @@ static int _compilecode(const char *re_loc, rcode *prog, int sizecode, int utf8)
       re++;
       if (!*re) return -1; /* Trailing backslash */
       switch (*re) {
-      case '<': case '>': case 'B':
-        EMIT(PC++, *re == '<' ? WBEG : (*re == '>' ? WEND : NOTB ));
+      case '<': case '>': case 'B': case 'b':
+        EMIT(PC++, *re == '<' ? WBEG : (*re == '>' ? WEND : (*re == 'B' ? NOTB : WB)));
         term = PC;
         break;
       case 'd': case 'D': case 's': case 'S': case 'w': case 'W':
@@ -236,13 +236,12 @@ static int _compilecode(const char *re_loc, rcode *prog, int sizecode, int utf8)
         EMIT(PC++, -1);
         EMIT(PC++, *re);
         break;
-      case 'n': case 'r': case 't': case 'b': case 'f': case 'v':
+      case 'n': case 'r': case 't': case 'f': case 'v':
         term = PC;
         switch (*re) {
           case 'n': ch = '\n'; goto _char;
           case 'r': ch = '\r'; goto _char;
           case 't': ch = '\t'; goto _char;
-          case 'b': ch = '\b'; goto _char;
           case 'f': ch = '\f'; goto _char;
           case 'v': ch = '\v'; goto _char;
         }
@@ -610,8 +609,15 @@ if (spc > JMP) { \
   npc += 2; \
   goto rec##nn; \
 } else if (spc == NOTB) { \
-  if (!((sp == s && sp == _sp) && !isword(sp)) && ((sp == s && sp == _sp) || \
-      (sp == _sp) || isword(sp) != isword(_sp))) \
+  if ((sp == s && _sp == s && \
+    (cont ? isword(cont) != isword(sp) : isword(sp))) || \
+    isword(_sp) != isword(sp)) \
+    deccheck(nn) \
+  npc++; goto rec##nn; \
+} else if (spc == WB) { \
+  if (!((sp == s && _sp == s && \
+    (cont ? isword(cont) != isword(sp) : isword(sp))) || \
+    isword(_sp) != isword(sp))) \
     deccheck(nn) \
   npc++; goto rec##nn; \
 } else if (spc == WBEG) { \
@@ -653,7 +659,7 @@ clistidx = nlistidx; \
 
 #define deccont() { decref(nsub) continue; }
 
-int re_pikevm(rcode *prog, const char *s, int len, const char **subp, int nsubp, int insensitive, int utf8)
+int re_pikevm(rcode *prog, const char *s, int len, const char **subp, int nsubp, int insensitive, int utf8, const char* cont)
 {
   int rsubsize = prog->presub, suboff = 0;
   int spc, i, j, c, *npc, osubp = nsubp * sizeof(char*);
@@ -792,11 +798,11 @@ void re_free(RE* re) {
   free(re);
 }
 
-const char** re_match(RE* re, const char* string, int len) {
+const char** re_match(RE* re, const char* string, int len, const char* cont) {
   if (re == NULL) return NULL;
 
   memset(re->captures, 0, re->count * sizeof(char*));
-  int sz = re_pikevm((rcode *)re->buffer, string, len, re->captures, re->count, re->insensitive, re->utf8);
+  int sz = re_pikevm((rcode *)re->buffer, string, len, re->captures, re->count, re->insensitive, re->utf8, cont);
 
   if (!sz) return NULL;
   return re->captures;

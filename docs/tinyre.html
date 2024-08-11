@@ -204,9 +204,9 @@
 
   </div>
   <div class="nine columns" id="content">
-    
+
     <div id="tocRoot"></div>
-    
+
     <p class="module-desc"><p>TinyRE is a Nim wrap for a tiny regex engine based on Rob Pike's VM implementation. Compare to other small regex engines, this engine supports unicode and most of common regex syntax, in less than 10K code size (LOC &lt; 1K), and guarantees that input regex will scale O(n) with the size of the string.</p>
 <p><strong>NOTICE: This implementation always return entire pattern as first capture. This is different from std/re.</strong></p>
 
@@ -225,7 +225,6 @@
 <span class="Operator">\</span><span class="Identifier">f</span>         <span class="Identifier">Match</span> <span class="Identifier">form</span> <span class="Identifier">feed</span> <span class="Identifier">character</span>
 <span class="Operator">\</span><span class="Identifier">v</span>         <span class="Identifier">Match</span> <span class="Identifier">vertical</span> <span class="Identifier">tab</span> <span class="Identifier">character</span>
 <span class="Operator">\</span><span class="Identifier">t</span>         <span class="Identifier">Match</span> <span class="Identifier">horizontal</span> <span class="Identifier">tab</span> <span class="Identifier">character</span>
-<span class="Operator">\</span><span class="Identifier">b</span>         <span class="Identifier">Match</span> <span class="Identifier">backspace</span> <span class="Identifier">character</span>
 <span class="Operator">+</span>          <span class="Identifier">Match</span> <span class="Identifier">one</span> <span class="Keyword">or</span> <span class="Identifier">more</span> <span class="Identifier">times</span> <span class="Punctuation">(</span><span class="Identifier">greedy</span><span class="Punctuation">)</span>
 <span class="Operator">+?</span>         <span class="Identifier">Match</span> <span class="Identifier">one</span> <span class="Keyword">or</span> <span class="Identifier">more</span> <span class="Identifier">times</span> <span class="Punctuation">(</span><span class="Identifier">non</span><span class="Operator">-</span><span class="Identifier">greedy</span><span class="Punctuation">)</span>
 <span class="Operator">*</span>          <span class="Identifier">Match</span> <span class="Identifier">zero</span> <span class="Keyword">or</span> <span class="Identifier">more</span> <span class="Identifier">times</span> <span class="Punctuation">(</span><span class="Identifier">greedy</span><span class="Punctuation">)</span>
@@ -238,6 +237,7 @@
 <span class="Operator">\</span><span class="Identifier">u0000</span>     <span class="Identifier">Match</span> <span class="Identifier">hex</span> <span class="Identifier">character</span> <span class="Identifier">code</span> <span class="Punctuation">(</span><span class="Identifier">exactly</span> <span class="DecNumber">4</span> <span class="Identifier">digits</span><span class="Punctuation">)</span>
 <span class="Operator">\</span><span class="Identifier">U00000000</span> <span class="Identifier">Match</span> <span class="Identifier">hex</span> <span class="Identifier">character</span> <span class="Identifier">code</span> <span class="Punctuation">(</span><span class="Identifier">exactly</span> <span class="DecNumber">8</span> <span class="Identifier">digits</span><span class="Punctuation">)</span>
 <span class="Operator">\&lt;</span><span class="Punctuation">,</span> <span class="Operator">\&gt;</span>     <span class="Identifier">Match</span> <span class="Identifier">start</span><span class="Operator">-</span><span class="Keyword">of</span><span class="Operator">-</span><span class="Identifier">word</span> <span class="Keyword">and</span> <span class="Keyword">end</span><span class="Operator">-</span><span class="Keyword">of</span><span class="Operator">-</span><span class="Identifier">word</span>
+<span class="Operator">\</span><span class="Identifier">b</span>         <span class="Identifier">Matches</span> <span class="Identifier">a</span> <span class="Identifier">word</span> <span class="Identifier">boundary</span>
 <span class="Operator">\</span><span class="Identifier">B</span>         <span class="Identifier">Matches</span> <span class="Identifier">a</span> <span class="Identifier">nonword</span> <span class="Identifier">boundary</span>
 <span class="Punctuation">[</span><span class="Operator">...</span><span class="Punctuation">]</span>      <span class="Identifier">Match</span> <span class="Identifier">any</span> <span class="Identifier">character</span> <span class="Keyword">from</span> <span class="Identifier">set</span><span class="Operator">.</span> <span class="Identifier">Ranges</span> <span class="Identifier">like</span> <span class="Punctuation">[</span><span class="Identifier">a</span><span class="Operator">-</span><span class="Identifier">z</span><span class="Punctuation">]</span> <span class="Keyword">or</span> <span class="Punctuation">[</span><span class="Operator">\</span><span class="Identifier">x00</span><span class="Operator">-\</span><span class="Identifier">u0000</span><span class="Punctuation">]</span> <span class="Identifier">are</span> <span class="Identifier">supported</span>
 <span class="Punctuation">[</span><span class="Operator">^...</span><span class="Punctuation">]</span>     <span class="Identifier">Match</span> <span class="Identifier">any</span> <span class="Identifier">character</span> <span class="Identifier">but</span> <span class="Identifier">ones</span> <span class="Keyword">from</span> <span class="Identifier">set</span>
@@ -271,9 +271,9 @@
   <dt><pre><a href="tinyre.html#Re"><span class="Identifier">Re</span></a> <span class="Other">=</span> <span class="Keyword">object</span>
   </pre></dt>
   <dd>
-    
-    
-    
+
+
+
   </dd>
 </div>
 <div id="ReFlag">
@@ -282,9 +282,9 @@
   <span class="Identifier">reGlobal</span><span class="Other">,</span>                 <span class="Comment">## Perform global matching</span>
   <span class="Identifier">reUtf8</span>                     <span class="Comment">## Perform utf8 matching</span></pre></dt>
   <dd>
-    
-    
-    
+
+
+
   </dd>
 </div>
 
@@ -298,18 +298,18 @@
   <dt><pre><span class="Keyword">proc</span> <a href="#bounds%2Ccstring%2CRe%2Cint"><span class="Identifier">bounds</span></a><span class="Other">(</span><span class="Identifier">cs</span><span class="Other">:</span> <span class="Identifier">cstring</span><span class="Other">;</span> <span class="Identifier">pattern</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a><span class="Other">;</span> <span class="Identifier">length</span> <span class="Other">=</span> <span class="DecNumber">-1</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">Slice</span><span class="Other">[</span><span class="Identifier">int</span><span class="Other">]</span><span class="Other">]</span> {.<span class="Identifier">inline</span><span class="Other">,</span>
     <span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
-    
+
     Returns all the starting position and end position of <tt class="docutils literal"><span class="pre"><span class="Identifier">pattern</span></span></tt> and substrings in cstring <tt class="docutils literal"><span class="pre"><span class="Identifier">cs</span></span></tt>. If it does not match, returns empty seq. <tt class="docutils literal"><span class="pre"><span class="Identifier">cs</span></span></tt> is not necessary null-terminated if length &gt;= 0. Otherwise, <tt class="docutils literal"><span class="pre"><span class="Identifier">cs</span></span></tt> will be assumed null-terminated and then length will be counted at runtime.
-    
+
   </dd>
 </div>
 <div id="bounds,string,Re,int">
   <dt><pre><span class="Keyword">proc</span> <a href="#bounds%2Cstring%2CRe%2Cint"><span class="Identifier">bounds</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">;</span> <span class="Identifier">pattern</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a><span class="Other">;</span> <span class="Identifier">start</span> <span class="Other">=</span> <span class="DecNumber">0</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">Slice</span><span class="Other">[</span><span class="Identifier">int</span><span class="Other">]</span><span class="Other">]</span> {.<span class="Identifier">inline</span><span class="Other">,</span>
     <span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
-    
+
     Returns all the starting position and end position of <tt class="docutils literal"><span class="pre"><span class="Identifier">pattern</span></span></tt> and substrings in <tt class="docutils literal"><span class="pre"><span class="Identifier">s</span><span class="Punctuation">[</span><span class="Identifier">start</span><span class="Operator">..</span><span class="Punctuation">]</span></span></tt>. If it does not match, returns empty seq.
-    
+
   </dd>
 </div>
 
@@ -319,18 +319,18 @@
   <dt><pre><span class="Keyword">proc</span> <a href="#contains%2Ccstring%2CRe%2Cint"><span class="Identifier">contains</span></a><span class="Other">(</span><span class="Identifier">cs</span><span class="Other">:</span> <span class="Identifier">cstring</span><span class="Other">;</span> <span class="Identifier">pattern</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a><span class="Other">;</span> <span class="Identifier">length</span> <span class="Other">=</span> <span class="DecNumber">-1</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">bool</span> {.<span class="Identifier">inline</span><span class="Other">,</span> <span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span>
     <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
-    
+
     Same as <tt class="docutils literal"><span class="pre"><span class="Identifier">find</span><span class="Punctuation">(</span><span class="Identifier">cs</span><span class="Punctuation">,</span> <span class="Identifier">pattern</span><span class="Punctuation">,</span> <span class="Identifier">start</span><span class="Punctuation">)</span> <span class="Operator">&gt;=</span> <span class="DecNumber">0</span></span></tt>.
-    
+
   </dd>
 </div>
 <div id="contains,string,Re,int">
   <dt><pre><span class="Keyword">proc</span> <a href="#contains%2Cstring%2CRe%2Cint"><span class="Identifier">contains</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">;</span> <span class="Identifier">pattern</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a><span class="Other">;</span> <span class="Identifier">start</span> <span class="Other">=</span> <span class="DecNumber">0</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">bool</span> {.<span class="Identifier">inline</span><span class="Other">,</span> <span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span>
     <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
-    
+
     Same as <tt class="docutils literal"><span class="pre"><span class="Identifier">find</span><span class="Punctuation">(</span><span class="Identifier">s</span><span class="Punctuation">,</span> <span class="Identifier">pattern</span><span class="Punctuation">,</span> <span class="Identifier">start</span><span class="Punctuation">)</span> <span class="Operator">&gt;=</span> <span class="DecNumber">0</span></span></tt>.
-    
+
   </dd>
 </div>
 
@@ -339,9 +339,9 @@
   <div id="endsWith,string,Re">
   <dt><pre><span class="Keyword">proc</span> <a href="#endsWith%2Cstring%2CRe"><span class="Identifier">endsWith</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">;</span> <span class="Identifier">suffix</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">bool</span> {.<span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
-    
+
     Returns true if <tt class="docutils literal"><span class="pre"><span class="Identifier">s</span></span></tt> ends with the pattern <tt class="docutils literal"><span class="pre"><span class="Identifier">suffix</span></span></tt>.
-    
+
   </dd>
 </div>
 
@@ -350,9 +350,9 @@
   <div id="escapeRe,string">
   <dt><pre><span class="Keyword">proc</span> <a href="#escapeRe%2Cstring"><span class="Identifier">escapeRe</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">string</span> {.<span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
-    
+
     Escapes <tt class="docutils literal"><span class="pre"><span class="Identifier">s</span></span></tt> so that it can be matched verbatim.
-    
+
   </dd>
 </div>
 
@@ -362,18 +362,18 @@
   <dt><pre><span class="Keyword">proc</span> <a href="#find%2Ccstring%2CRe%2Cint"><span class="Identifier">find</span></a><span class="Other">(</span><span class="Identifier">cs</span><span class="Other">:</span> <span class="Identifier">cstring</span><span class="Other">;</span> <span class="Identifier">pattern</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a><span class="Other">;</span> <span class="Identifier">length</span> <span class="Other">=</span> <span class="DecNumber">-1</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">int</span> {.<span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span>
     <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
-    
+
     Returns the starting position of <tt class="docutils literal"><span class="pre"><span class="Identifier">pattern</span></span></tt> in cstring <tt class="docutils literal"><span class="pre"><span class="Identifier">cs</span></span></tt>. If it does not match, <tt class="docutils literal"><span class="pre"><span class="Operator">-</span><span class="DecNumber">1</span></span></tt> is returned. <tt class="docutils literal"><span class="pre"><span class="Identifier">cs</span></span></tt> is not necessary null-terminated if length &gt;= 0. Otherwise, <tt class="docutils literal"><span class="pre"><span class="Identifier">cs</span></span></tt> will be assumed null-terminated and then length will be counted at runtime.
-    
+
   </dd>
 </div>
 <div id="find,string,Re,int">
   <dt><pre><span class="Keyword">proc</span> <a href="#find%2Cstring%2CRe%2Cint"><span class="Identifier">find</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">;</span> <span class="Identifier">pattern</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a><span class="Other">;</span> <span class="Identifier">start</span> <span class="Other">=</span> <span class="DecNumber">0</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">int</span> {.<span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span>
     <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
-    
+
     Returns the starting position of <tt class="docutils literal"><span class="pre"><span class="Identifier">pattern</span></span></tt> in <tt class="docutils literal"><span class="pre"><span class="Identifier">s</span></span></tt>. If it does not match, <tt class="docutils literal"><span class="pre"><span class="Operator">-</span><span class="DecNumber">1</span></span></tt> is returned.
-    
+
   </dd>
 </div>
 
@@ -382,9 +382,9 @@
   <div id="groupsCount,Re">
   <dt><pre><span class="Keyword">proc</span> <a href="#groupsCount%2CRe"><span class="Identifier">groupsCount</span></a><span class="Other">(</span><span class="Identifier">re</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">int</span> {.<span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
-    
+
     Returns the number of capturing groups.
-    
+
   </dd>
 </div>
 
@@ -394,18 +394,18 @@
   <dt><pre><span class="Keyword">proc</span> <a href="#match%2Cstring%2CRe%2CopenArray%5Bstring%5D%2Cint"><span class="Identifier">match</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">;</span> <span class="Identifier">pattern</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a><span class="Other">;</span> <span class="Identifier">matches</span><span class="Other">:</span> <span class="Keyword">var</span> <span class="Identifier">openArray</span><span class="Other">[</span><span class="Identifier">string</span><span class="Other">]</span><span class="Other">;</span> <span class="Identifier">start</span> <span class="Other">=</span> <span class="DecNumber">0</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">int</span> {.
     <span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
-    
+
     Returns substrings in the array <tt class="docutils literal"><span class="pre"><span class="Identifier">matches</span></span></tt> and then length of the matches if <tt class="docutils literal"><span class="pre"><span class="Identifier">s</span><span class="Punctuation">[</span><span class="Identifier">start</span><span class="Operator">..</span><span class="Punctuation">]</span></span></tt> matches the <tt class="docutils literal"><span class="pre"><span class="Identifier">pattern</span></span></tt>. If it does not match, nothing is written into <tt class="docutils literal"><span class="pre"><span class="Identifier">matches</span></span></tt> and 0 is returned.
-    
+
   </dd>
 </div>
 <div id="match,string,Re,int">
   <dt><pre><span class="Keyword">proc</span> <a href="#match%2Cstring%2CRe%2Cint"><span class="Identifier">match</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">;</span> <span class="Identifier">pattern</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a><span class="Other">;</span> <span class="Identifier">start</span> <span class="Other">=</span> <span class="DecNumber">0</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">string</span><span class="Other">]</span> {.<span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span>
     <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
-    
+
     Returns all matching substrings of <tt class="docutils literal"><span class="pre"><span class="Identifier">s</span><span class="Punctuation">[</span><span class="Identifier">start</span><span class="Operator">..</span><span class="Punctuation">]</span></span></tt> that match <tt class="docutils literal"><span class="pre"><span class="Identifier">pattern</span></span></tt>. If it does not match, returns empty seq.
-    
+
   </dd>
 </div>
 
@@ -415,9 +415,9 @@
   <dt><pre><span class="Keyword">proc</span> <a href="#multiReplace%2Cstring%2CopenArray%5Btuple%5BRe%2Cstring%5D%5D"><span class="Identifier">multiReplace</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">;</span> <span class="Identifier">subs</span><span class="Other">:</span> <span class="Identifier">openArray</span><span class="Other">[</span><span class="Keyword">tuple</span><span class="Other">[</span><span class="Identifier">re</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a><span class="Other">,</span> <span class="Identifier">by</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">]</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">string</span> {.
     <span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
-    
+
     Returns a modified copy of <tt class="docutils literal"><span class="pre"><span class="Identifier">s</span></span></tt> with the substitutions in <tt class="docutils literal"><span class="pre"><span class="Identifier">subs</span></span></tt> applied in parallel.
-    
+
   </dd>
 </div>
 
@@ -427,9 +427,9 @@
   <dt><pre><span class="Keyword">proc</span> <a href="#re%2Cstring%2Cset%5BReFlag%5D"><span class="Identifier">re</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">;</span> <span class="Identifier">flags</span><span class="Other">:</span> <span class="Identifier">set</span><span class="Other">[</span><a href="tinyre.html#ReFlag"><span class="Identifier">ReFlag</span></a><span class="Other">]</span> <span class="Other">=</span> <span class="Other">{</span><span class="Other">}</span><span class="Other">)</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a> {.<span class="Identifier">inline</span><span class="Other">,</span> <span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span>
     <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
-    
+
     Constructor of regular expressions.
-    
+
   </dd>
 </div>
 
@@ -438,9 +438,9 @@
   <div id="reG,string">
   <dt><pre><span class="Keyword">proc</span> <a href="#reG%2Cstring"><span class="Identifier">reG</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a> {.<span class="Identifier">inline</span><span class="Other">,</span> <span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
-    
+
     Constructor of regular expressions with reGlobal flag.
-    
+
   </dd>
 </div>
 
@@ -449,9 +449,9 @@
   <div id="reI,string">
   <dt><pre><span class="Keyword">proc</span> <a href="#reI%2Cstring"><span class="Identifier">reI</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a> {.<span class="Identifier">inline</span><span class="Other">,</span> <span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
-    
+
     Constructor of regular expressions with reIgnoreCase flag.
-    
+
   </dd>
 </div>
 
@@ -460,9 +460,9 @@
   <div id="reIG,string">
   <dt><pre><span class="Keyword">proc</span> <a href="#reIG%2Cstring"><span class="Identifier">reIG</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a> {.<span class="Identifier">inline</span><span class="Other">,</span> <span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
-    
+
     Constructor of regular expressions with reIgnoreCase and reGlobal flags.
-    
+
   </dd>
 </div>
 
@@ -471,9 +471,9 @@
   <div id="reIU,string">
   <dt><pre><span class="Keyword">proc</span> <a href="#reIU%2Cstring"><span class="Identifier">reIU</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a> {.<span class="Identifier">inline</span><span class="Other">,</span> <span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
-    
+
     Constructor of regular expressions with reIgnoreCase and reUtf8 flags.
-    
+
   </dd>
 </div>
 
@@ -482,9 +482,9 @@
   <div id="reIUG,string">
   <dt><pre><span class="Keyword">proc</span> <a href="#reIUG%2Cstring"><span class="Identifier">reIUG</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a> {.<span class="Identifier">inline</span><span class="Other">,</span> <span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
-    
+
     Constructor of regular expressions with reIgnoreCase, reUtf8 and reGlobal flags.
-    
+
   </dd>
 </div>
 
@@ -495,18 +495,18 @@
              <span class="Identifier">by</span><span class="Other">:</span> <span class="Keyword">proc</span> <span class="Other">(</span><span class="Identifier">n</span><span class="Other">:</span> <span class="Identifier">int</span><span class="Other">;</span> <span class="Identifier">matches</span><span class="Other">:</span> <span class="Identifier">openArray</span><span class="Other">[</span><span class="Identifier">string</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">;</span> <span class="Identifier">limit</span> <span class="Other">=</span> <span class="DecNumber">0</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">string</span> {.
     <span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">Exception</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">RootEffect</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
-    
+
     Replaces <tt class="docutils literal"><span class="pre"><span class="Identifier">sub</span></span></tt> in <tt class="docutils literal"><span class="pre"><span class="Identifier">s</span></span></tt> by the resulting strings from the callback. The callback proc receives the index of the current match (starting with 0), and an open array with the captures of each match.
-    
+
   </dd>
 </div>
 <div id="replace,string,Re,string,int">
   <dt><pre><span class="Keyword">proc</span> <a href="#replace%2Cstring%2CRe%2Cstring%2Cint"><span class="Identifier">replace</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">;</span> <span class="Identifier">sub</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a><span class="Other">;</span> <span class="Identifier">by</span><span class="Other">:</span> <span class="Identifier">string</span> <span class="Other">=</span> <span class="StringLit">&quot;&quot;</span><span class="Other">;</span> <span class="Identifier">limit</span> <span class="Other">=</span> <span class="DecNumber">0</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">string</span> {.
     <span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
-    
+
     Replaces <tt class="docutils literal"><span class="pre"><span class="Identifier">sub</span></span></tt> in <tt class="docutils literal"><span class="pre"><span class="Identifier">s</span></span></tt> by the string <tt class="docutils literal"><span class="pre"><span class="Identifier">by</span></span></tt>. Captures cannot be accessed in <tt class="docutils literal"><span class="pre"><span class="Identifier">by</span></span></tt>.
-    
+
   </dd>
 </div>
 
@@ -516,9 +516,9 @@
   <dt><pre><span class="Keyword">proc</span> <a href="#replacef%2Cstring%2CRe%2Cstring%2Cint"><span class="Identifier">replacef</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">;</span> <span class="Identifier">sub</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a><span class="Other">;</span> <span class="Identifier">by</span><span class="Other">:</span> <span class="Identifier">string</span> <span class="Other">=</span> <span class="StringLit">&quot;&quot;</span><span class="Other">;</span> <span class="Identifier">limit</span> <span class="Other">=</span> <span class="DecNumber">0</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">string</span> {.
     <span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
-    
+
     Replaces <tt class="docutils literal"><span class="pre"><span class="Identifier">sub</span></span></tt> in <tt class="docutils literal"><span class="pre"><span class="Identifier">s</span></span></tt> by the string <tt class="docutils literal"><span class="pre"><span class="Identifier">by</span></span></tt>. Captures can be accessed in <tt class="docutils literal"><span class="pre"><span class="Identifier">by</span></span></tt> with the notation <tt class="docutils literal"><span class="pre"><span class="Operator">$</span><span class="Identifier">i</span></span></tt> and <tt class="docutils literal"><span class="pre"><span class="Operator">$</span><span class="Comment">#</span></span></tt> (see strutils.`%`).
-    
+
   </dd>
 </div>
 
@@ -527,9 +527,9 @@
   <div id="reU,string">
   <dt><pre><span class="Keyword">proc</span> <a href="#reU%2Cstring"><span class="Identifier">reU</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a> {.<span class="Identifier">inline</span><span class="Other">,</span> <span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
-    
+
     Constructor of regular expressions with reUtf8 flag.
-    
+
   </dd>
 </div>
 
@@ -538,9 +538,9 @@
   <div id="reUG,string">
   <dt><pre><span class="Keyword">proc</span> <a href="#reUG%2Cstring"><span class="Identifier">reUG</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a> {.<span class="Identifier">inline</span><span class="Other">,</span> <span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
-    
+
     Constructor of regular expressions with reUtf8 and reGlobal flags.
-    
+
   </dd>
 </div>
 
@@ -550,9 +550,9 @@
   <dt><pre><span class="Keyword">proc</span> <a href="#split%2Cstring%2CRe%2Cint"><span class="Identifier">split</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">;</span> <span class="Identifier">pattern</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a><span class="Other">;</span> <span class="Identifier">maxsplit</span> <span class="Other">=</span> <span class="DecNumber">-1</span><span class="Other">;</span> <span class="Identifier">inclSep</span> <span class="Other">=</span> <span class="Identifier">false</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">string</span><span class="Other">]</span> {.
     <span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
-    
+
     Splits the string <tt class="docutils literal"><span class="pre"><span class="Identifier">s</span></span></tt> into a seq of substrings. If <tt class="docutils literal"><span class="pre"><span class="Identifier">maxsplit</span></span></tt> is specified and is positive, no more than <tt class="docutils literal"><span class="pre"><span class="Identifier">maxsplit</span></span></tt> splits is made. If <tt class="docutils literal"><span class="pre"><span class="Identifier">inclSep</span></span></tt> is true, the separator will be included in the result.
-    
+
   </dd>
 </div>
 
@@ -562,9 +562,9 @@
   <dt><pre><span class="Keyword">proc</span> <a href="#startsWith%2Cstring%2CRe%2Cint"><span class="Identifier">startsWith</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">;</span> <span class="Identifier">prefix</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a><span class="Other">;</span> <span class="Identifier">start</span> <span class="Other">=</span> <span class="DecNumber">0</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">bool</span> {.<span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span>
     <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
-    
+
     Returns true if <tt class="docutils literal"><span class="pre"><span class="Identifier">s</span><span class="Punctuation">[</span><span class="Identifier">start</span><span class="Operator">..</span><span class="Punctuation">]</span></span></tt> starts with the pattern <tt class="docutils literal"><span class="pre"><span class="Identifier">prefix</span></span></tt>. Add prefix <tt class="docutils literal"><span class="pre"><span class="Operator">^</span></span></tt> (assert start of string) to patten will speed up.
-    
+
   </dd>
 </div>
 
@@ -580,18 +580,18 @@
   <dt><pre><span class="Keyword">iterator</span> <a href="#bounds.i%2Ccstring%2CRe%2Cint"><span class="Identifier">bounds</span></a><span class="Other">(</span><span class="Identifier">cs</span><span class="Other">:</span> <span class="Identifier">cstring</span><span class="Other">;</span> <span class="Identifier">pattern</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a><span class="Other">;</span> <span class="Identifier">length</span> <span class="Other">=</span> <span class="DecNumber">-1</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Slice</span><span class="Other">[</span><span class="Identifier">int</span><span class="Other">]</span> {.<span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span>
     <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
-    
+
     Yields all the starting position and end position of <tt class="docutils literal"><span class="pre"><span class="Identifier">pattern</span></span></tt> and substrings in cstring <tt class="docutils literal"><span class="pre"><span class="Identifier">cs</span></span></tt>. <tt class="docutils literal"><span class="pre"><span class="Identifier">cs</span></span></tt> is not necessary null-terminated if length &gt;= 0. Otherwise, <tt class="docutils literal"><span class="pre"><span class="Identifier">cs</span></span></tt> will be assumed null-terminated and then length will be counted at runtime.
-    
+
   </dd>
 </div>
 <div id="bounds.i,string,Re,int">
   <dt><pre><span class="Keyword">iterator</span> <a href="#bounds.i%2Cstring%2CRe%2Cint"><span class="Identifier">bounds</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">;</span> <span class="Identifier">pattern</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a><span class="Other">;</span> <span class="Identifier">start</span> <span class="Other">=</span> <span class="DecNumber">0</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Slice</span><span class="Other">[</span><span class="Identifier">int</span><span class="Other">]</span> {.<span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span>
     <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
-    
+
     Yields all the starting position and end position of <tt class="docutils literal"><span class="pre"><span class="Identifier">pattern</span></span></tt> and substrings in <tt class="docutils literal"><span class="pre"><span class="Identifier">s</span><span class="Punctuation">[</span><span class="Identifier">start</span><span class="Operator">..</span><span class="Punctuation">]</span></span></tt>.
-    
+
   </dd>
 </div>
 
@@ -601,9 +601,9 @@
   <dt><pre><span class="Keyword">iterator</span> <a href="#match.i%2Cstring%2CRe%2Cint"><span class="Identifier">match</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">;</span> <span class="Identifier">pattern</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a><span class="Other">;</span> <span class="Identifier">start</span> <span class="Other">=</span> <span class="DecNumber">0</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">string</span> {.<span><span class="Other pragmadots">...</span></span><span class="pragmawrap"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span>
     <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">forbids</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span>.}</pre></dt>
   <dd>
-    
+
     Yields all matching substrings of <tt class="docutils literal"><span class="pre"><span class="Identifier">s</span><span class="Punctuation">[</span><span class="Identifier">start</span><span class="Operator">..</span><span class="Punctuation">]</span></span></tt> that match <tt class="docutils literal"><span class="pre"><span class="Identifier">pattern</span></span></tt>.
-    
+
   </dd>
 </div>
 
@@ -618,9 +618,9 @@
   <div id="=~.t,string,Re,int">
   <dt><pre><span class="Keyword">template</span> <a href="#%3D~.t%2Cstring%2CRe%2Cint"><span class="Identifier">`=~`</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">;</span> <span class="Identifier">pattern</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a><span class="Other">;</span> <span class="Identifier">start</span> <span class="Other">=</span> <span class="DecNumber">0</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">untyped</span></pre></dt>
   <dd>
-    
+
     This calls <tt class="docutils literal"><span class="pre"><span class="Identifier">match</span></span></tt> with an implicit declared <tt class="docutils literal"><span class="pre"><span class="Identifier">matches</span></span></tt> seq that can be used in the scope of the <tt class="docutils literal"><span class="pre"><span class="Operator">=~</span></span></tt> call.
-    
+
   </dd>
 </div>
 
@@ -629,9 +629,9 @@
   <div id="reGI.t,string">
   <dt><pre><span class="Keyword">template</span> <a href="#reGI.t%2Cstring"><span class="Identifier">reGI</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a></pre></dt>
   <dd>
-    
+
     Same as <tt class="docutils literal"><span class="pre"><span class="Identifier">reIG</span><span class="Punctuation">(</span><span class="Identifier">s</span><span class="Punctuation">)</span></span></tt>
-    
+
   </dd>
 </div>
 
@@ -640,9 +640,9 @@
   <div id="reGIU.t,string">
   <dt><pre><span class="Keyword">template</span> <a href="#reGIU.t%2Cstring"><span class="Identifier">reGIU</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a></pre></dt>
   <dd>
-    
+
     Same as <tt class="docutils literal"><span class="pre"><span class="Identifier">reIUG</span><span class="Punctuation">(</span><span class="Identifier">s</span><span class="Punctuation">)</span></span></tt>
-    
+
   </dd>
 </div>
 
@@ -651,9 +651,9 @@
   <div id="reGU.t,string">
   <dt><pre><span class="Keyword">template</span> <a href="#reGU.t%2Cstring"><span class="Identifier">reGU</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a></pre></dt>
   <dd>
-    
+
     Same as <tt class="docutils literal"><span class="pre"><span class="Identifier">reUG</span><span class="Punctuation">(</span><span class="Identifier">s</span><span class="Punctuation">)</span></span></tt>
-    
+
   </dd>
 </div>
 
@@ -662,9 +662,9 @@
   <div id="reGUI.t,string">
   <dt><pre><span class="Keyword">template</span> <a href="#reGUI.t%2Cstring"><span class="Identifier">reGUI</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a></pre></dt>
   <dd>
-    
+
     Same as <tt class="docutils literal"><span class="pre"><span class="Identifier">reIUG</span><span class="Punctuation">(</span><span class="Identifier">s</span><span class="Punctuation">)</span></span></tt>
-    
+
   </dd>
 </div>
 
@@ -673,9 +673,9 @@
   <div id="reIGU.t,string">
   <dt><pre><span class="Keyword">template</span> <a href="#reIGU.t%2Cstring"><span class="Identifier">reIGU</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a></pre></dt>
   <dd>
-    
+
     Same as <tt class="docutils literal"><span class="pre"><span class="Identifier">reIUG</span><span class="Punctuation">(</span><span class="Identifier">s</span><span class="Punctuation">)</span></span></tt>
-    
+
   </dd>
 </div>
 
@@ -684,9 +684,9 @@
   <div id="reUGI.t,string">
   <dt><pre><span class="Keyword">template</span> <a href="#reUGI.t%2Cstring"><span class="Identifier">reUGI</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a></pre></dt>
   <dd>
-    
+
     Same as <tt class="docutils literal"><span class="pre"><span class="Identifier">reIUG</span><span class="Punctuation">(</span><span class="Identifier">s</span><span class="Punctuation">)</span></span></tt>
-    
+
   </dd>
 </div>
 
@@ -695,9 +695,9 @@
   <div id="reUI.t,string">
   <dt><pre><span class="Keyword">template</span> <a href="#reUI.t%2Cstring"><span class="Identifier">reUI</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a></pre></dt>
   <dd>
-    
+
     Same as <tt class="docutils literal"><span class="pre"><span class="Identifier">reIU</span><span class="Punctuation">(</span><span class="Identifier">s</span><span class="Punctuation">)</span></span></tt>
-    
+
   </dd>
 </div>
 
@@ -706,9 +706,9 @@
   <div id="reUIG.t,string">
   <dt><pre><span class="Keyword">template</span> <a href="#reUIG.t%2Cstring"><span class="Identifier">reUIG</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <a href="tinyre.html#Re"><span class="Identifier">Re</span></a></pre></dt>
   <dd>
-    
+
     Same as <tt class="docutils literal"><span class="pre"><span class="Identifier">reIUG</span><span class="Punctuation">(</span><span class="Identifier">s</span><span class="Punctuation">)</span></span></tt>
-    
+
   </dd>
 </div>
 
@@ -727,7 +727,7 @@
       </div>
     </div>
   </div>
-  
+
   <!-- Google fonts -->
   <link href='https://fonts.googleapis.com/css?family=Lato:400,600,900' rel='stylesheet' type='text/css'/>
   <link href='https://fonts.googleapis.com/css?family=Source+Code+Pro:400,500,600' rel='stylesheet' type='text/css'/>
