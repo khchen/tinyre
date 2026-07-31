@@ -1,20 +1,21 @@
 #====================================================================
 #
-#             TinyRE - A Tiny Regex Engine for Nim
-#              Copyright (c) Chen Kai-Hung, Ward
+#             TinyRe - A Tiny Regex Engine for Nim
+#                 Copyright (c) Chen Kai-Hung
 #
 #====================================================================
 
-import tinyre
-import std/[unittest, strformat]
-from std/re as pcre import nil
+when not declared(Re):
+  import tinyre
 
-# some source for the tests:
+import std/[unittest, strformat]
+
+# Some test cases are adapted from:
 #   https://github.com/kyx0r/pikevm/blob/master/test.sh
 #   https://github.com/kokke/tiny-regex-c/blob/master/tests/test1.c
 #   https://github.com/nitely/nim-regex/blob/master/tests/tests.nim
 
-suite "Test Suite for TinyRE":
+suite "Test Suite for TinyRe":
   proc output(pattern: Re, s: string): string =
     for slice in bounds(s, pattern):
       if slice.a < 0 and slice.b < 0:
@@ -22,7 +23,15 @@ suite "Test Suite for TinyRE":
       else:
         result.add fmt"({slice.a},{slice.b+1})"
 
-  test "Test Engine 1":
+  # ============================================================================
+  # Chapter 1: Engine
+  #
+  # The first six blocks are the retained PikeVM compatibility corpus. They
+  # stay grouped by corpus chunk so a failure remains easy to map back to the
+  # imported source; targeted feature tests follow this corpus.
+  # ============================================================================
+
+  test "Regex engine semantics":
     check:
       output(re"\d", "5") == "(0,1)"
       output(re"\w+", "hej") == "(0,3)"
@@ -99,8 +108,7 @@ suite "Test Suite for TinyRE":
       output(re"[a-z]+\nbreak", "blahblah\nbreak") == "(0,14)"
       output(re"[a-z\s]+\nbreak", "bla bla \nbreak") == "(0,14)"
 
-  test "Test Engine 2":
-    check:
+      # Legacy corpus B
       output(re"abracadabra$", "abracadabracadabra") == "(7,18)"
       output(re"a...b", "abababbb") == "(2,7)"
       output(re"XXXXXX", "..XXXXXX") == "(2,8)"
@@ -305,8 +313,7 @@ suite "Test Suite for TinyRE":
       output(re".*(\\000).*", "\\000") == "(0,4)(0,4)"
       output(re"\\000", "\\000") == "(0,4)"
 
-  test "Test Engine 3":
-    check:
+      # Legacy corpus C
       output(re"(a*)*", "a") == "(0,1)(0,1)"
       output(re"(a*)*", "x") == "(0,0)(?,?)"
       output(re"(a*)*", "aaaaaa") == "(0,6)(0,6)"
@@ -366,8 +373,7 @@ suite "Test Suite for TinyRE":
       output(re"(a*){2}(x)", "ax") == "(0,2)(1,1)(1,2)"
       output(re"(a*){2}(x)", "axa") == "(0,2)(1,1)(1,2)"
 
-  test "Test Engine 4":
-    check:
+      # Legacy corpus D
       output(re"((..)|(.))", "") == ""
       output(re"((..)|(.))((..)|(.))", "") == ""
       output(re"((..)|(.))((..)|(.))((..)|(.))", "") == ""
@@ -460,8 +466,7 @@ suite "Test Suite for TinyRE":
       output(re"(ab|a|c|bcd)*(d*)", "ababcd") == "(0,6)(4,5)(5,6)"
       output(re"(ab|a|c|bcd)+(d*)", "ababcd") == "(0,6)(4,5)(5,6)"
 
-  test "Test Engine 5":
-    check:
+      # Legacy corpus E
       output(re"abc", "abcdef") == "(0,3)"
       output(re"cde", "abcdef") == "(2,5)"
       output(re"abc*", "abdef") == "(0,2)"
@@ -647,8 +652,7 @@ suite "Test Suite for TinyRE":
       output(re"((a*b*c*)|(a*c*b*))*?", "bbb") == "(0,0)(?,?)(?,?)(?,?)"
       output(re"((a*b*c*)|(a*c*b*))+", "bbb") == "(0,3)(0,3)(0,3)(?,?)"
 
-  test "Test Engine 6":
-    check:
+      # Legacy corpus F
       output(re"a{0}b", "aaaaaaab") == "(7,8)"
       output(re"a{0,}b", "aaaaaaab") == "(0,8)"
       output(re"a{0,2}b", "aaaaaaab") == "(5,8)"
@@ -690,7 +694,9 @@ suite "Test Suite for TinyRE":
       output(re"a{1,}?b", "aaaab") == "(0,5)"
       output(re"a{1,3}?b", "aaaab") == "(1,5)"
 
-  test "Test Binary/Unicode Mode":
+  # These checks intentionally use public operations to observe the engine's
+  # byte-oriented and UTF-8 decoding modes.
+    # Binary and UTF-8 mode
     check:
       match("\0\0\0", reG"\x00") == @["\0", "\0", "\0"]
       match("abc\0def\0", reG"\w+") == @["abc", "def"]
@@ -706,9 +712,152 @@ suite "Test Suite for TinyRE":
       contains("弢", reU"\U0002F894")
       not contains("弢", reU"\xF0\xAF\xA2\x94")
       not contains("弢", re"\U0002F894")
+      match("α", reIU"Α") == @["α"]
+      match("\xC3", reU".") == @["\xC3"]
+      split("\xC3", reU"") == @["\xC3"]
 
-  test "Test match() and bounds()":
+    # Word boundaries
     check:
+      bounds("|a|b|", reG"\<") == @[1 .. 0, 3 .. 2]
+      bounds("|a|b|", reG"\>") == @[2 .. 1, 4 .. 3]
+      bounds("|a|b|", reG"\B") == @[0 .. -1, 5 .. 4]
+
+    # Keep these expected matches local so the regression test does not need
+    # an external regex implementation at runtime.
+    let wordBoundaryCases = [
+      (text: "hello world",
+       nonBoundary: @["e", "l", "l", "o", "o", "r", "l", "d"],
+       boundary: @["h", " ", "w"]),
+      (text: "test123",
+       nonBoundary: @["e", "s", "t", "1", "2", "3"],
+       boundary: @["t"]),
+      (text: " Nim language ",
+       nonBoundary: @[" ", "i", "m", "a", "n", "g", "u", "a", "g", "e"],
+       boundary: @["N", " ", "l", " "]),
+      (text: "Nim language ",
+       nonBoundary: @["i", "m", "a", "n", "g", "u", "a", "g", "e"],
+       boundary: @["N", " ", "l", " "]),
+      (text: " Nim language",
+       nonBoundary: @[" ", "i", "m", "a", "n", "g", "u", "a", "g", "e"],
+       boundary: @["N", " ", "l"]),
+      (text: "abc123 def456",
+       nonBoundary: @["b", "c", "1", "2", "3", "e", "f", "4", "5", "6"],
+       boundary: @["a", " ", "d"]),
+      (text: "cat_dog",
+       nonBoundary: @["a", "t", "_", "d", "o", "g"],
+       boundary: @["c"]),
+      (text: "test 123 word123",
+       nonBoundary: @["e", "s", "t", "2", "3", "o", "r", "d", "1", "2", "3"],
+       boundary: @["t", " ", "1", " ", "w"]),
+      (text: "beginning middle end",
+       nonBoundary: @["e", "g", "i", "n", "n", "i", "n", "g", "i", "d", "d", "l", "e", "n", "d"],
+       boundary: @["b", " ", "m", " ", "e"]),
+      (text: "|word|",
+       nonBoundary: @["|", "o", "r", "d"],
+       boundary: @["w", "|"]),
+      (text: "|hello|world|",
+       nonBoundary: @["|", "e", "l", "l", "o", "o", "r", "l", "d"],
+       boundary: @["h", "|", "w", "|"]),
+      (text: "|123|abc|",
+       nonBoundary: @["|", "2", "3", "b", "c"],
+       boundary: @["1", "|", "a", "|"]),
+      (text: "|Test|cases|",
+       nonBoundary: @["|", "e", "s", "t", "a", "s", "e", "s"],
+       boundary: @["T", "|", "c", "|"]),
+      (text: "|-|_|",
+       nonBoundary: @["|", "-", "|"],
+       boundary: @["_", "|"])
+    ]
+
+    for testCase in wordBoundaryCases:
+      check:
+        match(testCase.text, reG"\B.") == testCase.nonBoundary
+        match(testCase.text, reG"\b.") == testCase.boundary
+
+    # Explicitly cover every transition type without consulting another
+    # regex implementation for the expected positions.
+    check:
+      bounds("a--b", reG"\b") == @[0 .. -1, 1 .. 0, 3 .. 2, 4 .. 3]
+      bounds("a--b", reG"\B") == @[2 .. 1]
+      bounds("a--b", reG"\<") == @[0 .. -1, 3 .. 2]
+      bounds("a--b", reG"\>") == @[1 .. 0, 4 .. 3]
+
+      # An underscore is a word byte, so it does not split a word.
+      bounds("_a_", reG"\b") == @[0 .. -1, 3 .. 2]
+      bounds("_a_", reG"\B") == @[1 .. 0, 2 .. 1]
+      bounds("_a_", reG"\<") == @[0 .. -1]
+      bounds("_a_", reG"\>") == @[3 .. 2]
+
+      # \\B also matches between two non-word bytes, including at both ends
+      # of an all-non-word input; the other three assertions do not.
+      bounds("----", reG"\B") == @[0 .. -1, 1 .. 0, 2 .. 1, 3 .. 2, 4 .. 3]
+      bounds("", reG"\b") == newSeq[Slice[int]]()
+      bounds("", reG"\<") == newSeq[Slice[int]]()
+      bounds("", reG"\>") == newSeq[Slice[int]]()
+      bounds("", reG"\B") == @[0 .. -1]
+
+      # Word assertions are zero-width: only the complete words are returned.
+      match("foo bar_baz", reG"\<\w+\>") == @["foo", "bar_baz"]
+      match("foobar", reG"\<foo\>") == newSeq[string]()
+      match("foobar", reG"foo\>") == newSeq[string]()
+      match("foobar", reG"\<bar") == newSeq[string]()
+
+      # Search offsets retain the preceding byte from the original subject.
+      match("xfoo", re"\<foo", start = 1) == newSeq[string]()
+      bounds("xfoo", reG"\b", start = 1) == @[4 .. 3]
+      bounds("xfoo", reG"\B", start = 1) == @[1 .. 0, 2 .. 1, 3 .. 2]
+      bounds("xfoo", reG"\<", start = 1) == newSeq[Slice[int]]()
+      bounds("xfoo", reG"\>", start = 1) == @[4 .. 3]
+      bounds("foo", reG"\b", start = 3) == @[3 .. 2]
+      bounds("foo", reG"\B", start = 3) == newSeq[Slice[int]]()
+      bounds("foo", reG"\<", start = 3) == newSeq[Slice[int]]()
+      bounds("foo", reG"\>", start = 3) == @[3 .. 2]
+      find("xfoo", re"\<foo", start = 1) == -1
+      contains("xfoo", re"\<foo", start = 1) == false
+      startsWith("xfoo", re"\<foo", start = 1) == false
+      startsWith("-foo", re"\<foo", start = 1)
+
+      # High-bit bytes are word bytes in both byte and UTF-8 modes.
+      bounds("\xC3\xA9-\xC3\xA9", reG"\b") ==
+        @[0 .. -1, 2 .. 1, 3 .. 2, 5 .. 4]
+      bounds("\xC3\xA9-\xC3\xA9", reUG"\b") ==
+        @[0 .. -1, 2 .. 1, 3 .. 2, 5 .. 4]
+      bounds("\xC3\xA9-\xC3\xA9", reG"\<") == @[0 .. -1, 3 .. 2]
+      bounds("\xC3\xA9-\xC3\xA9", reG"\>") == @[2 .. 1, 5 .. 4]
+      bounds("a\0b", reG"\b") == @[0 .. -1, 1 .. 0, 2 .. 1, 3 .. 2]
+      bounds("a\0b", reG"\B") == newSeq[Slice[int]]()
+
+      # The same assertions must work through the higher-level APIs.
+      startsWith("foo", re"\<foo\>")
+      startsWith("foobar", re"\<foo\>") == false
+      endsWith("foo", re"\<foo\>")
+      endsWith("foo-bar", re"\<bar\>")
+      endsWith("foobar", re"\<bar\>") == false
+      find("foo-bar", re"\<bar\>") == 4
+      find("foobar", re"\<bar\>") == -1
+
+      # \b and \B are complementary at every byte position.
+      bounds("a--b", reG"(?:\b|\B)") ==
+        @[0 .. -1, 1 .. 0, 2 .. 1, 3 .. 2, 4 .. 3]
+
+  # ============================================================================
+  # Chapter 2: API
+  # ============================================================================
+
+  test "Matching and search operations":
+    var matchSlots = newSeq[string](3)
+    var untouchedSlots = @["keep"]
+    var shortMatchSlots = newSeq[string](2)
+
+    check:
+      groupsCount(re"abc") == 1
+      groupsCount(re"(a)(b)") == 3
+      match("abc", re"(a)(b)", matchSlots) == 3
+      matchSlots == @["ab", "a", "b"]
+      match("abc", re"(a)(b)", shortMatchSlots) == 2
+      shortMatchSlots == @["ab", "a"]
+      match("abc", re"(z)", untouchedSlots) == 0
+      untouchedSlots == @["keep"]
       match("\n \r \t \b \v \f", reG"\n|\r|\t|\x08|\v|\f") == @["\n", "\r", "\t", "\b", "\v", "\f"]
       match("\n \r \t \b \v \f", reG"[\n\r\t\x08\v\f]") == @["\n", "\r", "\t", "\b", "\v", "\f"]
       match("\x00\x01\x02\x03\x04", reG"[\x01-\x03]") == @["\x01", "\x02", "\x03"]
@@ -719,23 +868,67 @@ suite "Test Suite for TinyRE":
       match("a", reG".*?") == @["", ""] # do match at the end of input
       match("abc", reG".*?") == @["", "", "", ""] # advance one character for empty
       match("abc|abc", reG"(?:abc)*") == @["abc", "abc"]
-      bounds("|a|b|", reG"\<") == @[1 .. 0, 3 .. 2]
-      bounds("|a|b|", reG"\>") == @[2 .. 1, 4 .. 3]
-      bounds("|a|b|", reG"\B") == @[0 .. -1, 5 .. 4]
+      match("abc", reG"^") == @[""]
+      match("abc", reG"^|b") == @["", "b"]
+      match("a\0b", reG("\0")) == @["\0"]
+      match("abc", re"a", -1) == newSeq[string]()
+      match("abc", re"a", 4) == newSeq[string]()
+      bounds("abc", re"a", -1) == newSeq[Slice[int]]()
+      bounds("abc", re"a", 4) == newSeq[Slice[int]]()
 
-    for text in [
-      "hello world", "test123",
-      " Nim language ", "Nim language ", " Nim language",
-      "abc123 def456", "cat_dog", "test 123 word123",
-      "beginning middle end",
-      "|word|", "|hello|world|", "|123|abc|",
-      "|Test|cases|", "|-|_|"
-    ]:
-      check:
-        match(text, reG"\B.") == pcre.findAll(text, pcre.re"\B.")
-        match(text, reG"\b.") == pcre.findAll(text, pcre.re"\b.")
+      # Search
+      find("abc", re"") == 0
+      contains("abc", re"")
+      find("abc", re"^") == 0
+      find("abc", re"a", -1) == -1
+      find("abc", re"a", 4) == -1
+      contains("abc", re"a", -1) == false
+      match("abc", re"", start = 3) == @[""]
+      bounds("abc", re"", start = 3) == @[3 .. 2]
+      find("abc", re"", start = 3) == 3
+      startsWith("abc", re"", start = 3)
+      "abc" =~ re"(b)"
+      not ("abc" =~ re"z")
 
-  test "Test split()":
+    var operatorMatches: seq[string] = @[]
+    if "abc" =~ re"(b)":
+      operatorMatches = matches
+    check:
+      operatorMatches == @["b", "b"]
+
+      # Starts and ends
+      startsWith("abc", re"ab")
+      startsWith("abc", re"bc") == false
+      startsWith("弢ⒶΪ", reU"弢Ⓐ")
+      startsWith("弢", re"\U0002F894") == false
+      startsWith("弢", re"\xF0\xAF\xA2")
+      startsWith("弢", reU"\U0002F894")
+      startsWith("弢", reU"\xF0\xAF\xA2") == false
+      startsWith("abc", re"\w")
+      startsWith("abc", re"\d") == false
+      startsWith("abc", re"(a|b)")
+      startsWith("bc", re"(a|b)")
+      startsWith("c", re"(a|b)") == false
+      startsWith("abc", re"b", start = 1)
+      startsWith("abc", re"a", 4) == false
+
+      # End-matching API
+      endsWith("abc", re"bc")
+      endsWith("abc", re"ab") == false
+      endsWith("弢ⒶΪ", reU"ⒶΪ")
+      endsWith("弢", re"\U0002F894") == false
+      endsWith("弢", re"\xAF\xA2\x94")
+      endsWith("弢", reU"\U0002F894")
+      endsWith("弢", reU"\xF0\xAF\xA2") == false
+      endsWith("abc", re"(b|c)")
+      endsWith("ab", re"(b|c)")
+      endsWith("a", re"(b|c)") == false
+      endsWith("abc", re"")
+      endsWith("abc", re"$")
+      endsWith("", re"")
+      endsWith("abc", re"^") == false
+
+  test "Split and replacement operations":
     check:
       split("a,b,c", re",") == @["a", "b", "c"]
       split("00232this02939is39an22example111", re"\d+") == @["", "this", "is", "an", "example", ""]
@@ -757,42 +950,45 @@ suite "Test Suite for TinyRE":
       split("", re"foo") == @[""]
       split("bar", re"foo") == @["bar"]
       split("abcd", re"", 2) == @["a", "b", "cd"]
+      split("a,b,c", re",", 1, inclSep = true) == @["a", ",", "b,c"]
+      split("a,b,c", re",", 2, inclSep = true) == @["a", ",", "b", ",", "c"]
+      split("", re"", maxsplit = 0) == @[""]
       split("中文測試", reU"", 2) == @["中", "文", "測試"]
       split("中文", re"") == @["\xE4", "\xB8", "\xAD", "\xE6", "\x96", "\x87"]
       split("中文", reU"") == @["中", "文"]
+      split("abc", re"^") == @["", "abc"]
+      split("abc", re"$") == @["abc", ""]
+      split("a--b", re"\b") == @["", "a", "--", "b"]
+      split("a--b", re"\B") == @["a-", "-b"]
+      split("a--b", re"\<") == @["", "a--", "b"]
+      split("a--b", re"\>") == @["a", "--b", ""]
       split("a,b;c:d/e", re"\W+", inclSep=true) == @["a", ",", "b", ";", "c", ":", "d", "/", "e"]
 
-  test "Test startsWith()":
+    # Replacement
     check:
-      startsWith("abc", re"ab")
-      startsWith("abc", re"bc") == false
-      startsWith("弢ⒶΪ", reU"弢Ⓐ")
-      startsWith("弢", re"\U0002F894") == false
-      startsWith("弢", re"\xF0\xAF\xA2")
-      startsWith("弢", reU"\U0002F894")
-      startsWith("弢", reU"\xF0\xAF\xA2") == false
-      startsWith("abc", re"\w")
-      startsWith("abc", re"\d") == false
-      startsWith("abc", re"(a|b)")
-      startsWith("bc", re"(a|b)")
-      startsWith("c", re"(a|b)") == false
-      startsWith("abc", re"b", start = 1)
+      multiReplace("abc", @[(re: re"", by: "x")]) == "xaxbxc"
+      multiReplace("abc", @[(re: re"^", by: "X")]) == "Xabc"
+      multiReplace("abc", @[(re: re"$", by: "X")]) == "abcX"
+    var callbackCount = 0
+    var callbackMatches: seq[string] = @[]
 
-  test "Test endsWith()":
     check:
-      endsWith("abc", re"bc")
-      endsWith("abc", re"ab") == false
-      endsWith("弢ⒶΪ", reU"ⒶΪ")
-      endsWith("弢", re"\U0002F894") == false
-      endsWith("弢", re"\xAF\xA2\x94")
-      endsWith("弢", reU"\U0002F894")
-      endsWith("弢", reU"\xF0\xAF\xA2") == false
-      endsWith("abc", re"(b|c)")
-      endsWith("ab", re"(b|c)")
-      endsWith("a", re"(b|c)") == false
-
-  test "Test replace()":
-    check:
+      replace("bbb", re"a*", "x") == "xbxbxb"
+      replace("abc", re"", "x") == "xaxbxc"
+      replace("aaa", re"a", "b", 2) == "bba"
+      multiReplace("abc", @[
+        (re: re"b", by: "B"),
+        (re: re".", by: "x")
+      ]) == "xBx"
+      replace("a--b", re"\b", "|") == "|a|--|b"
+      multiReplace("-foo", @[(re: re"\<foo", by: "X")]) == "-X"
+      multiReplace("xfoo", @[(re: re"\<foo", by: "X")]) == "xfoo"
+      replace("bbb", re"a*", proc (n: int, matches: openArray[string]): string =
+        callbackCount.inc
+        callbackMatches.add(matches[0])
+        "x") == "xbxbxb"
+      callbackCount == 3
+      callbackMatches == @["", "", ""]
       replacef("a", re"(a)", "m($1)") == "m(a)"
       replacef("a", re"(a)", "m($1) m($1)") == "m(a) m(a)"
       replacef("aaa", re"(a*)", "m($1)") == "m(aaa)"
@@ -809,3 +1005,101 @@ suite "Test Suite for TinyRE":
       replacef("abc", re"(d)", "m($1)") == "abc"
       replacef("aaa", re"a", "b") == "bbb"
       replacef("aaa", re"a", "b", 1) == "baa"
+
+  # ============================================================================
+  # Chapter 3: Contract
+  # ============================================================================
+
+  test "Pattern ownership and escaping":
+    let globalSource = reG"."
+    var copiedPattern = re"."
+    copiedPattern = globalSource
+
+    proc copySurvivesSourceDestruction(): bool =
+      var copied: Re
+      block:
+        let source = re"(a)"
+        copied = source
+        let replacement = re"(z)"
+        discard replacement
+        match("a", copied) == @["a", "a"]
+
+    check:
+      # `Re` copy assignment must preserve the global flag.
+      match("abc", copiedPattern) == @["a", "b", "c"]
+
+      # All flag-order aliases must expand to a usable constructor.
+      match("aA", reI"a") == @["a"]
+      match("aA", reIG"a") == @["a", "A"]
+      match("aA", reGI"a") == @["a", "A"]
+      match("aA", reUI"a") == @["a"]
+      match("aA", reUG"a") == @["a"]
+      match("aA", reGU"a") == @["a"]
+      match("aA", reIUG"a") == @["a", "A"]
+      match("aA", reIGU"a") == @["a", "A"]
+      match("aA", reUIG"a") == @["a", "A"]
+      match("aA", reUGI"a") == @["a", "A"]
+      match("aA", reGIU"a") == @["a", "A"]
+      match("aA", reGUI"a") == @["a", "A"]
+      copySurvivesSourceDestruction()
+
+      # Pattern escaping
+      # escapeRe must preserve control bytes that have regex meanings.
+      escapeRe("\0") == "\\x00"
+      escapeRe("\b") == "\\x08"
+      escapeRe(".") == "\\."
+      escapeRe("^") == "\\^"
+      escapeRe("\\") == "\\\\"
+      escapeRe("\n\r\t\f\v") == "\\n\\r\\t\\f\\v"
+      contains("\0", re(escapeRe("\0")))
+      contains("\b", re(escapeRe("\b")))
+      contains("^$().[]{}*+?|\\", re(escapeRe("^$().[]{}*+?|\\")))
+      find("a\0b", re("\0")) == 1
+
+  test "Compiler rejection and input boundaries":
+    proc nestedPattern(depth: int): string =
+      result = newString(depth * 2 + 1)
+      for i in 0..<depth:
+        result[i] = '('
+        result[depth + 1 + i] = ')'
+      result[depth] = 'a'
+
+    proc alternationPattern(count: int): string =
+      result = newString(count * 2 - 1)
+      for i in 0..<count:
+        result[i * 2] = 'a'
+        if i > 0:
+          result[i * 2 - 1] = '|'
+
+    proc compileFails(pattern: string): bool =
+      try:
+        discard re(pattern)
+        false
+      except ValueError:
+        true
+
+    check:
+      compileFails(nestedPattern(4097))
+      compileFails(alternationPattern(4099))
+      compileFails("{2}")
+      compileFails("{0,1}")
+      compileFails("\\" & "x")
+      compileFails("\\" & "u")
+      compileFails("\\" & "U")
+      compileFails("\\" & "UFFFFFFFF")
+      compileFails("[" & "\\")
+
+    # CString boundary
+    # A `cstring` with an explicit length need not be NUL-terminated.
+    let cstringBoundaryBuffer = alloc(2)
+    copyMem(cstringBoundaryBuffer, "aa".cstring, 2)
+    let nonNullTerminatedCString = cast[cstring](cstringBoundaryBuffer)
+    defer: dealloc(cstringBoundaryBuffer)
+
+    check:
+      bounds("foo".cstring, reG"\b") == @[0 .. -1, 3 .. 2]
+      find("foo".cstring, re"\>") == 3
+      contains("foo".cstring, re"\<foo\>")
+      bounds(nonNullTerminatedCString, reG"\b", 2) == @[0 .. -1, 2 .. 1]
+      contains(nonNullTerminatedCString, re"aa", 2)
+      find(nonNullTerminatedCString, re"\>", 1) == 1

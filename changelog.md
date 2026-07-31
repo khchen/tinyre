@@ -1,12 +1,33 @@
+<!--
+#====================================================================
+#
+#             TinyRe - A Tiny Regex Engine for Nim
+#                 Copyright (c) Chen Kai-Hung
+#
+#====================================================================
+-->
+
+Version 2.0.0
+-------------
+* Require Nim 2.0 or later.
+* Fix NUL-byte, empty-pattern, anchor, and word-boundary handling.
+* Fix zero-width matches in `split()`, `replace()`, and `multiReplace()`.
+* Clarify byte-offset, capture, and UTF-8 matching semantics.
+* Preserve preceding-byte context for `\b`, `\B`, `\<`, and `\>` with
+  nonzero `start` offsets in matching and search APIs.
+* Expand the regression suite.
+* Refactor compiler and VM code.
+
 Version 1.6.0
 -------------
-* Add word boundary assertion (`\b`). Breaking change! For the original `\b`, use `\x08` instead.
-* Fix the `\B` assertion, hoping the behavior will be the same as in PCRE.
-* Fix bugs related to zero-length matches.
+* Add a word-boundary assertion (`\b`); breaking change: use `\x08` for a
+  literal backspace.
+* Fix the `\B` assertion to match PCRE behavior.
+* Fix zero-length matches.
 
 Version 1.5.2
 -------------
-* Fix destructors compatibility.
+* Fix destructor compatibility.
 
 Version 1.5.1
 -------------
@@ -14,36 +35,34 @@ Version 1.5.1
 
 Version 1.5.0
 -------------
-* Add nonword boundary assertion (`\B`).
-* Character set supports unicode and hex now.
-* Add some features that similar to nim-regex:
-  * match()/bounds() will advance one character for empty match (instead of stop).
-    For example: `.*?`.
-  * match()/bounds() will do last match at the end of input.
-* The new features won't apply to replace() or split(), so that
-  `replacef("aaa", re"(a*)", "m($1)")` gets `m(aaa)` instead of `m(aaa)m()`.
-  I think this is more intuitively.
-* Fix bug to compile in i386 mode.
-* Fix bug in split().
+* Add a non-word-boundary assertion (`\B`).
+* Add Unicode and hexadecimal support to character sets.
+* Make `match()` and `bounds()` advance by one character after an empty match,
+  similar to `nim-regex` (for example, `.*?`).
+* Make `match()` and `bounds()` perform the final match at the end of input.
+* Keep these behaviors out of `replace()` and `split()`; for example,
+  `replacef("aaa", re"(a*)", "m($1)")` returns `m(aaa)`, not `m(aaa)m()`.
+* Fix i386 compilation.
+* Fix `split()`.
 
 Version 1.4.0
 -------------
-* Add non-greedy repetition operators {n,m}? and {n,}?.
-* Fix bug in repetition operators.
+* Add non-greedy repetition operators `{n,m}?` and `{n,}?`.
+* Fix repetition operators.
 
 Version 1.3.0
 -------------
-* Fix bug in multiReplace().
-* Add inclSep parameter for split().
+* Fix `multiReplace()`.
+* Add the `inclSep` parameter to `split()`.
 
 Version 1.2.0
 -------------
-* Add proc multiReplace().
+* Add `multiReplace()`.
 
 Version 1.1.0
 -------------
-* Fix wrong flags in reIU, reUG, and reIUG.
-* Fix split to handle utf8 string for empty match.
+* Fix flags in `reIU`, `reUG`, and `reIUG`.
+* Fix UTF-8 empty-match handling in `split()`.
 
 Version 1.0.0
 -------------
